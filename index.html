@@ -1,0 +1,2250 @@
+<!DOCTYPE html>
+<html lang="en-GB" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Welcome - Debugging Lab</title>
+<style>
+:root{
+  --bg:#1f1f1f; --side-bg:#181818; --bar-bg:#181818; --panel-bg:#181818; --tab-bg:#181818; --tab-active:#1f1f1f;
+  --border:#2b2b2b; --border-strong:#707070; --fg:#cccccc; --fg-strong:#ffffff; --muted:#9d9d9d;
+  --accent:#4daafc; --btn-bg:#0067c0; --btn-fg:#ffffff; --btn-hover:#0a7ad6; --btn2-bg:#313131; --btn2-fg:#e0e0e0;
+  --input-bg:#313131; --hover:#2a2d2e; --sel:#37373d; --focus:#4daafc;
+  --ln:#8b949e; --cur-bg:#2e2e0e; --cur-border:#d7ba00; --frame-bg:#1c3320; --pick-bg:#04395e; --cursor-bg:#262626;
+  --bp:#e51400; --status-bg:#006fbf; --status-debug:#b5501f; --status-fg:#ffffff;
+  --ok:#89d185; --ok-bg:#16301a; --err:#f48771; --err-bg:#3a1c1c; --warn:#d9b100; --info-bg:#11283a; --chg-bg:#2e2e0e; --add-bg:#16301a;
+  --tok-kw:#569cd6; --tok-ctl:#c586c0; --tok-type:#4ec9b0; --tok-str:#ce9178; --tok-num:#b5cea8; --tok-com:#7daf6b; --tok-pp:#c586c0; --tok-fn:#dcdcaa; --tok-var:#9cdcfe;
+  --d-blue:#75beff; --d-green:#89d185; --d-red:#f48771; --tip-bg:#2b2b2b; --tip-fg:#e6e6e6; --shadow:rgba(0,0,0,.5);
+}
+[data-theme="light"]{
+  --bg:#ffffff; --side-bg:#f8f8f8; --bar-bg:#f8f8f8; --panel-bg:#f8f8f8; --tab-bg:#f8f8f8; --tab-active:#ffffff;
+  --border:#e5e5e5; --border-strong:#8a8a8a; --fg:#3b3b3b; --fg-strong:#000000; --muted:#5f5f5f;
+  --accent:#005fb8; --btn-bg:#005fb8; --btn-fg:#ffffff; --btn-hover:#004f9a; --btn2-bg:#e5e5e5; --btn2-fg:#2b2b2b;
+  --input-bg:#ffffff; --hover:#ececec; --sel:#e4e6f1; --focus:#005fb8;
+  --ln:#6a6f76; --cur-bg:#fff9c2; --cur-border:#8a6d00; --frame-bg:#dff3df; --pick-bg:#d6e9ff; --cursor-bg:#f3f3f3;
+  --bp:#e51400; --status-bg:#005fb8; --status-debug:#b5501f; --status-fg:#ffffff;
+  --ok:#1b6e1b; --ok-bg:#e6f4e6; --err:#b01011; --err-bg:#fdecec; --warn:#7a5c00; --info-bg:#e8f1fb; --chg-bg:#fff3b0; --add-bg:#e2f5e2;
+  --tok-kw:#0000ff; --tok-ctl:#af00db; --tok-type:#1e6a82; --tok-str:#a31515; --tok-num:#076e48; --tok-com:#006b00; --tok-pp:#af00db; --tok-fn:#795e26; --tok-var:#001080;
+  --d-blue:#005fb8; --d-green:#2e7d2a; --d-red:#a1260d; --tip-bg:#f3f3f3; --tip-fg:#2b2b2b; --shadow:rgba(0,0,0,.2);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:13px/1.5 Consolas,"Cascadia Code","Courier New",monospace;overflow:hidden}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+button:disabled{cursor:not-allowed;opacity:.45}
+:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#app{display:flex;flex-direction:column;height:100vh}
+
+/* Title bar */
+.titlebar{display:flex;align-items:center;height:34px;background:var(--bar-bg);border-bottom:1px solid var(--border);flex:none;padding-left:10px;gap:10px}
+.titlebar .logo{color:var(--accent);font-weight:bold}
+.titlebar .menu{display:flex;gap:12px;color:var(--muted)}
+.titlebar .title{flex:1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--fg)}
+.titlebar .tbtn{padding:3px 8px;border:1px solid var(--border-strong);border-radius:4px}
+.titlebar .tbtn:hover{background:var(--hover)}
+.winctl{display:flex}
+.winctl span{width:42px;height:34px;display:grid;place-items:center;color:var(--muted)}
+
+/* Main layout */
+.main{flex:1;display:flex;min-height:0;position:relative}
+.activity{width:48px;flex:none;background:var(--bar-bg);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.activity button{width:48px;height:48px;display:grid;place-items:center;color:var(--muted);border-left:2px solid transparent}
+.activity button:hover{color:var(--fg-strong)}
+.activity button[aria-pressed="true"]{color:var(--fg-strong);border-left-color:var(--accent)}
+.activity svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.sidebar{width:270px;flex:none;background:var(--side-bg);border-right:1px solid var(--border);overflow:auto}
+.sidebar.closed{display:none}
+.sidebar h2{font-size:11px;font-weight:normal;text-transform:uppercase;letter-spacing:.5px;margin:0;padding:10px 14px;color:var(--fg)}
+.sidebar details{border-top:1px solid var(--border)}
+.sidebar summary{font-size:11px;font-weight:bold;text-transform:uppercase;padding:4px 8px;cursor:pointer;color:var(--fg)}
+.sidebar .sec{padding:2px 0 8px}
+.sidebar .empty{color:var(--muted);padding:2px 14px;margin:0}
+.sidebar ul{list-style:none;margin:0;padding:0}
+.startrow{padding:0 14px 10px}
+.btn{background:var(--btn-bg);color:var(--btn-fg);padding:5px 12px;border-radius:3px;display:inline-block}
+.btn:hover:not(:disabled){background:var(--btn-hover)}
+.btn.sec2{background:var(--btn2-bg);color:var(--btn2-fg)}
+.btn.sec2:hover:not(:disabled){background:var(--hover)}
+.btn.wide{width:100%;text-align:center}
+.scope{padding:1px 14px;font-weight:bold;color:var(--fg)}
+.var{padding:1px 14px 1px 24px;word-break:break-word}
+.var.sub{padding-left:38px}
+.var.chg{background:var(--chg-bg)}
+.vn{color:var(--tok-var)} .vv.t-int,.vv.t-double{color:var(--tok-num)} .vv.t-string{color:var(--tok-str)} .vv.t-bool{color:var(--tok-kw)} .vv.t-raw{color:var(--fg)} .vv.t-err{color:var(--err)}
+.rowline{display:flex;align-items:center;gap:6px;padding:1px 8px 1px 14px}
+.rowline .grow{flex:1;min-width:0;word-break:break-word}
+.xbtn{width:20px;height:20px;border-radius:3px;color:var(--muted);flex:none}
+.xbtn:hover{background:var(--hover);color:var(--fg-strong)}
+.watchform{display:flex;gap:4px;padding:4px 14px}
+input[type=text],input[type=number],input[type=search],textarea{background:var(--input-bg);border:1px solid var(--border-strong);border-radius:3px;padding:3px 6px;width:100%;color:var(--fg)}
+.frame{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;padding:2px 14px 2px 24px}
+.frame:hover{background:var(--hover)} .frame[aria-current="true"]{background:var(--sel);color:var(--fg-strong)}
+.frame small{color:var(--muted);font-size:12px}
+.frame[aria-current="true"] small{color:inherit}
+.bpdot{width:10px;height:10px;border-radius:50%;background:var(--bp);flex:none}
+.files button{display:flex;gap:6px;width:100%;text-align:left;padding:3px 14px 3px 22px}
+.files button:hover{background:var(--hover)} .files button[aria-current="true"]{background:var(--sel);color:var(--fg-strong)}
+.files .tick{color:var(--ok);margin-left:auto} .files .ic{color:var(--tok-kw);flex:none}
+.pbar{height:8px;background:var(--input-bg);border:1px solid var(--border-strong);border-radius:4px;overflow:hidden}
+.pbar i{display:block;height:100%;background:var(--accent)}
+.pwrap{padding:10px 14px}
+.extitem{padding:8px 14px;border-top:1px solid var(--border)} .extitem b{color:var(--fg-strong)} .extitem p{margin:2px 0 0;color:var(--muted)}
+
+.work{flex:1;display:flex;min-width:0}
+.centre{flex:1;display:flex;flex-direction:column;min-width:0}
+.tabrow{display:flex;flex-wrap:wrap;align-items:center;background:var(--tab-bg);border-bottom:1px solid var(--border);flex:none}
+.tabs{display:flex;overflow-x:auto;flex:1;min-width:0}
+.tabs button{padding:8px 14px;border-right:1px solid var(--border);color:var(--muted);white-space:nowrap;border-top:2px solid transparent}
+.tabs button[aria-selected="true"]{background:var(--tab-active);color:var(--fg-strong);border-top-color:var(--accent)}
+.tabs button:hover{color:var(--fg-strong)}
+.dbgbar{display:flex;align-items:center;gap:2px;padding:3px 8px}
+.dbgbar button{width:28px;height:26px;display:grid;place-items:center;border-radius:4px}
+.dbgbar button:hover:not(:disabled){background:var(--hover)}
+.dbgbar svg{width:16px;height:16px;fill:currentColor}
+.dbgbar .runbtn{width:auto;padding:0 10px;color:var(--d-green);gap:6px;display:flex;font-weight:bold}
+.dbgbar .sep{width:1px;height:18px;background:var(--border-strong);margin:0 4px}
+.c-blue{color:var(--d-blue)} .c-green{color:var(--d-green)} .c-red{color:var(--d-red)}
+[data-tip]{position:relative}
+[data-tip]:hover::after,[data-tip]:focus-visible::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);right:0;white-space:nowrap;background:var(--tip-bg);color:var(--tip-fg);border:1px solid var(--border-strong);padding:2px 8px;font-size:12px;font-weight:normal;z-index:60;border-radius:3px;box-shadow:0 2px 8px var(--shadow)}
+.activity [data-tip]:hover::after,.activity [data-tip]:focus-visible::after{top:12px;left:52px;right:auto}
+
+.edwrap{flex:1;min-height:0;position:relative;background:var(--bg)}
+#editor,#doc{position:absolute;inset:0;overflow:auto}
+#code{min-width:max-content;padding:6px 0 30px}
+.row{display:flex;align-items:stretch;line-height:20px;border:1px solid transparent;border-width:1px 0;cursor:text}
+.row .gut{width:24px;flex:none;display:grid;place-items:center;position:relative}
+.row .gut .dot{width:11px;height:11px;border-radius:50%;background:transparent}
+.row .gut:hover .dot{background:var(--bp);opacity:.45}
+.row .gut[aria-pressed="true"] .dot{background:var(--bp);opacity:1}
+.row .ln{width:34px;flex:none;text-align:right;color:var(--ln);padding-right:14px;box-sizing:content-box;user-select:none}
+.row .src{flex:1;white-space:pre;font:inherit;padding-right:24px;color:var(--fg)}
+.row.cursor{background:var(--cursor-bg)} .row.cursor .ln{color:var(--fg-strong)}
+.row.pick{background:var(--pick-bg);border-color:var(--accent)}
+.row.frm{background:var(--frame-bg)}
+.row.added{background:var(--add-bg)} .row.added .ln{color:var(--fg)}
+.row.cur{background:var(--cur-bg);border-color:var(--cur-border)} .row.cur .ln{color:var(--fg-strong)}
+.row.cur .gut::after{content:"";position:absolute;left:5px;top:4px;width:14px;height:11px;background:var(--cur-border);clip-path:polygon(0 25%,55% 25%,55% 0,100% 50%,55% 100%,55% 75%,0 75%)}
+.row.haserr .src{text-decoration:underline wavy var(--err);text-underline-offset:3px}
+.row.found{box-shadow:inset 3px 0 0 var(--ok)}
+.k{color:var(--tok-kw)} .c{color:var(--tok-ctl)} .t{color:var(--tok-type)} .s{color:var(--tok-str)} .n{color:var(--tok-num)} .m{color:var(--tok-com)} .p{color:var(--tok-pp)} .f{color:var(--tok-fn)} .v{color:var(--tok-var)}
+
+#doc{padding:22px 30px 50px}
+.doc{max-width:860px;font-size:13.5px;line-height:1.65}
+.doc h1{font-size:24px;font-weight:normal;color:var(--fg-strong);margin:0 0 4px}
+.doc h2{font-size:17px;color:var(--fg-strong);margin:26px 0 8px;border-bottom:1px solid var(--border);padding-bottom:4px}
+.doc h3{font-size:14px;color:var(--fg-strong);margin:16px 0 4px}
+.doc .lead{color:var(--muted);margin-top:0}
+.doc table{border-collapse:collapse;width:100%;margin:8px 0}
+.doc th,.doc td{border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top}
+.doc th{background:var(--side-bg);color:var(--fg-strong)}
+.doc td svg{width:16px;height:16px;fill:currentColor;vertical-align:middle}
+.doc pre{background:var(--side-bg);border:1px solid var(--border);padding:10px 12px;overflow:auto;border-radius:4px;color:var(--fg)}
+.doc code,.guide code{color:var(--tok-str)}
+kbd{border:1px solid var(--border-strong);border-bottom-width:2px;border-radius:3px;padding:0 5px;background:var(--side-bg);color:var(--fg-strong);font:inherit;white-space:nowrap}
+.doc .card{background:var(--info-bg);border-left:3px solid var(--accent);padding:10px 14px;margin:12px 0;color:var(--fg)}
+.exlist{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.exlist button{width:100%;text-align:left;border:1px solid var(--border-strong);border-radius:4px;padding:8px 10px;background:var(--side-bg)}
+.exlist button:hover{background:var(--hover)} .exlist small{display:block;color:var(--muted)} .exlist .tick{color:var(--ok);float:right}
+.big{font-size:30px;color:var(--fg-strong)}
+
+/* Bottom panel */
+.panel{height:210px;flex:none;border-top:1px solid var(--border);background:var(--panel-bg);display:flex;flex-direction:column}
+.ptabs{display:flex;gap:4px;padding:0 10px;flex:none;overflow-x:auto}
+.ptabs button{padding:6px 8px;font-size:11px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid transparent;white-space:nowrap}
+.ptabs button[aria-selected="true"]{color:var(--fg-strong);border-bottom-color:var(--accent)}
+.badge{background:var(--btn-bg);color:var(--btn-fg);border-radius:8px;padding:0 6px;margin-left:4px}
+#pbody{flex:1;overflow:auto;padding:4px 14px 10px;white-space:pre-wrap;word-break:break-word}
+#pbody .cmd{color:var(--fg-strong)} #pbody .err{color:var(--err)} #pbody .note{color:var(--muted)} #pbody .info{color:var(--accent)} #pbody .out{color:var(--fg)} #pbody .good{color:var(--ok)}
+.prob{display:flex;gap:8px;width:100%;text-align:left;padding:3px 4px;white-space:normal}
+.prob:hover{background:var(--hover)} .prob .sev{color:var(--err);flex:none} .prob small{color:var(--muted)}
+
+/* Lab guide */
+.guide{width:370px;flex:none;border-left:1px solid var(--border);background:var(--side-bg);overflow:auto;padding:12px 16px 30px;font-size:13px}
+.guide h2{font-size:15px;color:var(--fg-strong);margin:10px 0 8px}
+.guide h3{font-size:13px;color:var(--fg-strong);margin:16px 0 4px;text-transform:uppercase;letter-spacing:.4px}
+.guide p{margin:6px 0}
+.gmeta{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-bottom:4px}
+.stepper{list-style:none;display:flex;flex-wrap:wrap;gap:4px;padding:0;margin:0 0 6px;counter-reset:st}
+.stepper li{counter-increment:st;border:1px solid var(--border-strong);border-radius:10px;padding:0 8px;font-size:11.5px;color:var(--muted)}
+.stepper li::before{content:counter(st) ". "}
+.stepper li.done{color:var(--ok);border-color:var(--ok)}
+.stepper li.now{background:var(--btn-bg);color:var(--btn-fg);border-color:var(--btn-bg);font-weight:bold}
+.opts{border:0;padding:0;margin:6px 0}
+.opts legend{padding:0;margin-bottom:4px;color:var(--fg)}
+.opt{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--border-strong);border-radius:4px;padding:6px 8px;margin:5px 0;cursor:pointer;background:var(--bg)}
+.opt:hover{background:var(--hover)}
+.opt input{margin-top:3px;flex:none;accent-color:var(--btn-bg)}
+.opt code{white-space:pre-wrap;word-break:break-word;color:var(--fg)}
+.fb{border-left:3px solid;padding:7px 10px;margin:8px 0;border-radius:0 4px 4px 0}
+.fb.ok{border-color:var(--ok);background:var(--ok-bg);color:var(--fg)} .fb.ok b{color:var(--ok)}
+.fb.bad{border-color:var(--err);background:var(--err-bg);color:var(--fg)} .fb.bad b{color:var(--err)}
+.fb.info{border-color:var(--accent);background:var(--info-bg);color:var(--fg)}
+.hint{border:1px dashed var(--border-strong);border-radius:4px;padding:6px 10px;margin:6px 0}
+.hint b{color:var(--warn)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chip{border:1px solid var(--border-strong);border-radius:12px;padding:1px 10px;background:var(--bg)}
+.chip:hover{background:var(--hover)}
+.guide ul{padding-left:18px;margin:6px 0}
+.guide .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.habit{border:1px solid var(--warn);border-radius:4px;padding:8px 10px;margin:10px 0}
+.habit b{color:var(--warn)}
+.locrow{display:flex;gap:8px;align-items:center;margin:8px 0}
+.locrow input{width:80px}
+.fixin{margin:4px 0}
+.row .gut.cond[aria-pressed="true"] .dot{background:var(--bg);box-shadow:inset 0 0 0 3px var(--bp)}
+#pbody .warn{color:var(--warn)}
+.cond-note{color:var(--muted)}
+@media print{
+  .titlebar,.activity,.sidebar,.tabrow,.panel,.guide,.status,#toast{display:none!important}
+  body{overflow:visible}
+  #app,.main,.work,.centre,.edwrap{display:block;height:auto;min-height:0}
+  #doc{position:static;overflow:visible}
+  .doc,.doc *{color:#000!important;background:#fff!important}
+}
+
+/* Status bar */
+.status{height:24px;flex:none;background:var(--status-bg);color:var(--status-fg);display:flex;align-items:center;justify-content:space-between;font-size:12px;padding:0 4px;gap:8px;overflow:hidden;white-space:nowrap}
+.status.debug{background:var(--status-debug)}
+.status div{display:flex;gap:2px;align-items:center;min-width:0}
+.status span,.status button{padding:2px 7px;color:var(--status-fg)}
+.status button:hover{background:rgba(255,255,255,.18)}
+.status :focus-visible{outline-color:#fff}
+#toast{position:fixed;right:18px;bottom:40px;max-width:380px;background:var(--tip-bg);color:var(--tip-fg);border:1px solid var(--border-strong);border-left:3px solid var(--accent);padding:10px 14px;border-radius:4px;box-shadow:0 4px 14px var(--shadow);z-index:90}
+#toast:empty{display:none}
+
+@media (max-width:1150px){
+  .sidebar{position:absolute;left:48px;top:0;bottom:0;z-index:30;box-shadow:4px 0 14px var(--shadow)}
+  .guide{width:320px}
+  .titlebar .menu{display:none}
+}
+@media (max-width:820px){
+  body{overflow:auto}
+  #app{height:auto;min-height:100vh}
+  .work{flex-direction:column}
+  .centre{height:82vh;min-height:520px;flex:none}
+  .guide{width:auto;border-left:0;border-top:1px solid var(--border);overflow:visible}
+  .winctl{display:none}
+  #doc{padding:16px}
+}
+@media (prefers-reduced-motion:no-preference){ .row{transition:background-color .08s} }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="titlebar">
+    <span class="logo" aria-hidden="true">&lt;/&gt;</span>
+    <div class="menu" aria-hidden="true"><span>File</span><span>Edit</span><span>Selection</span><span>View</span><span>Go</span><span>Run</span><span>Terminal</span><span>Help</span></div>
+    <div class="title" id="winTitle">Welcome - Debugging Lab</div>
+    <button class="tbtn" data-act="theme" id="themeTop" aria-label="Switch colour theme">Theme</button>
+    <div class="winctl" aria-hidden="true"><span>&#9472;</span><span>&#9633;</span><span>&#10005;</span></div>
+  </header>
+
+  <div class="main">
+    <nav class="activity" aria-label="Activity bar">
+      <button data-act="view" data-view="explorer" data-tip="Explorer" aria-label="Explorer" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h7l4 4v11H9z"/><path d="M16 4v4h4"/><path d="M9 9H4v11h9v-1"/></svg></button>
+      <button data-act="view" data-view="search" data-tip="Search" aria-label="Search" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="5.5"/><path d="M15 15l5 5"/></svg></button>
+      <button data-act="view" data-view="debug" data-tip="Run and Debug" aria-label="Run and Debug" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4l10 6.5-3 2L5 17z"/><circle cx="16.5" cy="17" r="3"/><path d="M16.5 12.5V14M12 17h1.5M19.5 17H21M13.5 13.5l1 1M19.5 13.5l-1 1"/></svg></button>
+      <button data-act="view" data-view="ext" data-tip="Extensions" aria-label="Extensions" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h6v6H4zM4 13h6v6H4zM11 13h6v6h-6z"/><path d="M14 4h6v6h-6z"/></svg></button>
+    </nav>
+
+    <aside class="sidebar" id="sidebar" aria-label="Side bar">
+      <section id="view-explorer" hidden>
+        <h2>Explorer</h2>
+        <details open><summary>debugging-lab</summary><div class="sec"><ul class="files" id="files"></ul></div></details>
+        <details open><summary>Progress</summary><div class="pwrap" id="progSide"></div></details>
+      </section>
+      <section id="view-search" hidden>
+        <h2>Search</h2>
+        <div class="watchform"><label class="sr" for="searchBox">Search the exercise files</label><input type="search" id="searchBox" placeholder="Search exercise files"></div>
+        <div class="sec" id="searchRes"><p class="empty">Type at least two characters.</p></div>
+      </section>
+      <section id="view-debug">
+        <h2>Run and Debug</h2>
+        <div class="startrow"><button class="btn wide" data-act="debug">&#9654; Start Debugging (F5)</button></div>
+        <details open><summary>Variables</summary><div class="sec" id="vVars"></div></details>
+        <details open><summary>Watch</summary><div class="sec"><ul id="vWatch"></ul>
+          <form class="watchform" id="watchForm"><label class="sr" for="watchIn">Expression to watch</label><input type="text" id="watchIn" placeholder="Expression, e.g. i &lt; 5" autocomplete="off"><button class="btn sec2" type="submit" aria-label="Add watch expression">Add</button></form></div></details>
+        <details open><summary>Call Stack</summary><div class="sec" id="vStack"></div></details>
+        <details open><summary>Breakpoints</summary><div class="sec" id="vBps"></div></details>
+      </section>
+      <section id="view-ext" hidden>
+        <h2>Extensions</h2>
+        <p class="empty">Installed (illustrative only)</p>
+        <div class="extitem"><b>C/C++ language support</b><p>Syntax colouring, error reporting and debugging for C++ source files. Simulated inside this lab.</p></div>
+        <div class="extitem"><b>Debugging Lab Guide</b><p>Provides the hypothesis-first exercise guide shown on the right of the editor.</p></div>
+        <div class="extitem"><b>Debugging Toolkit</b><p>Quick reference for compiler errors, breakpoints, stepping, watches and the call stack.</p><p><button class="btn sec2" data-act="tab" data-tab="toolkit">Open reference</button></p></div>
+      </section>
+    </aside>
+
+    <div class="work">
+      <main class="centre">
+        <div class="tabrow">
+          <div class="tabs" role="tablist" aria-label="Editor tabs" id="tabs"></div>
+          <div class="dbgbar" role="toolbar" aria-label="Run and debug toolbar" id="dbgbar"></div>
+        </div>
+        <div class="edwrap">
+          <div id="editor" tabindex="0" role="group" aria-label="Code editor. Use the up and down arrow keys to move between lines and F9 to toggle a breakpoint on the current line."><div id="code"></div></div>
+          <div id="doc" hidden tabindex="0" role="region" aria-label="Document"></div>
+        </div>
+        <section class="panel" aria-label="Panel">
+          <div class="ptabs" role="tablist" aria-label="Panel tabs" id="ptabs"></div>
+          <div id="pbody" role="log" tabindex="0" aria-label="Panel output"></div>
+        </section>
+      </main>
+      <aside class="guide" id="guide" aria-label="Lab guide"></aside>
+    </div>
+  </div>
+
+  <footer class="status" id="status">
+    <div><span id="stState">Debugging Lab</span><span id="stProb">Errors: 0</span></div>
+    <div><span id="stScore">Score: 0/100</span><span id="stPos">Ln 1, Col 1</span><span>Spaces: 4</span><span>UTF-8</span><span>C++</span><button data-act="theme" id="themeBottom" aria-label="Switch colour theme">Theme</button></div>
+  </footer>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div class="sr" id="live" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- helpers ---------- */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const clone=o=>JSON.parse(JSON.stringify(o));
+const store={
+  get(k,d){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v);}catch(e){return d;}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+};
+const D=x=>({t:'double',v:x});
+const V=a=>({t:'vec',v:a});
+const R=s=>({t:'raw',v:s});
+
+/* ---------- syntax highlighting ---------- */
+const KW_CTL=new Set('if else for while do return switch case break continue default'.split(' '));
+const KW=new Set('int double float char bool void const static unsigned long short auto true false using namespace class struct new delete static_cast sizeof nullptr'.split(' '));
+const TYPES=new Set('std string vector size_t'.split(' '));
+function hl(line){
+  const sp=(c,t)=>'<span class="'+c+'">'+esc(t)+'</span>';
+  let m;
+  if(line.trim().charAt(0)==='#'){
+    m=/^(\s*#\s*\w+)(\s*)(<[^>]*>|"[^"]*")?(.*)$/.exec(line);
+    return sp('p',m[1])+esc(m[2])+(m[3]?sp('s',m[3]):'')+esc(m[4]);
+  }
+  const re=/(\/\/.*$)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)|(\s+|.)/g;
+  let out='';
+  while((m=re.exec(line))){
+    if(m[1]) out+=sp('m',m[1]);
+    else if(m[2]) out+=sp('s',m[2]);
+    else if(m[3]) out+=sp('n',m[3]);
+    else if(m[4]){
+      const w=m[4];
+      if(KW_CTL.has(w)) out+=sp('c',w);
+      else if(KW.has(w)) out+=sp('k',w);
+      else if(TYPES.has(w)) out+=sp('t',w);
+      else if(/^\s*\(/.test(line.slice(re.lastIndex))) out+=sp('f',w);
+      else out+=sp('v',w);
+    } else out+=esc(m[0]);
+  }
+  return out;
+}
+
+/* ---------- values and watch evaluation ---------- */
+function typeOf(x){
+  if(x&&typeof x==='object'&&!Array.isArray(x)&&x.t) return x;
+  if(typeof x==='number') return {t:Number.isInteger(x)?'int':'double',v:x};
+  if(typeof x==='string') return {t:'string',v:x};
+  if(typeof x==='boolean') return {t:'bool',v:x};
+  if(Array.isArray(x)) return {t:'arr',v:x};
+  return {t:'raw',v:String(x)};
+}
+function fmt(x){
+  x=typeOf(x);
+  switch(x.t){
+    case 'int': return String(x.v);
+    case 'double': return Number.isInteger(x.v)?x.v.toFixed(1):String(+x.v.toFixed(6));
+    case 'string': return '"'+x.v+'"';
+    case 'bool': return String(x.v);
+    case 'arr': return '{'+x.v.join(', ')+'}';
+    case 'vec': return '{ size = '+x.v.length+' }';
+    default: return String(x.v);
+  }
+}
+const TYPE_NAME={int:'int',double:'double',string:'std::string',bool:'bool',arr:'int array',vec:'std::vector<int>',raw:''};
+
+function evalWatch(src,vars,garbage){
+  src=src.trim();
+  if(/(^|[^=!<>])=($|[^=])/.test(src)) throw 'assignment is not evaluated here, because it would change the program state';
+  const toks=[]; const re=/\s*(\d+\.\d+|\d+|[A-Za-z_]\w*|<=|>=|==|!=|&&|\|\||::|[-+*\/%<>!()\[\].])/y;
+  let pos=0,m;
+  while(pos<src.length){ re.lastIndex=pos; m=re.exec(src); if(!m) throw 'the expression could not be parsed'; toks.push(m[1]); pos=re.lastIndex; }
+  let p=0;
+  const peek=()=>toks[p], next=()=>toks[p++];
+  const expect=x=>{ if(next()!==x) throw "expected '"+x+"'"; };
+  const num=a=>{ if(a.t==='bool') return {t:'int',v:a.v?1:0}; if(a.t!=='int'&&a.t!=='double') throw 'the operands must be numbers'; return a; };
+  function bin(op,a,b){
+    a=num(a); b=num(b); const dbl=a.t==='double'||b.t==='double', T=dbl?'double':'int';
+    switch(op){
+      case '+': return {t:T,v:a.v+b.v};
+      case '-': return {t:T,v:a.v-b.v};
+      case '*': return {t:T,v:a.v*b.v};
+      case '/': if(!dbl&&b.v===0) throw 'division by zero'; return dbl?{t:'double',v:a.v/b.v}:{t:'int',v:Math.trunc(a.v/b.v)};
+      case '%': if(dbl) throw 'the % operator needs integer operands'; if(b.v===0) throw 'division by zero'; return {t:'int',v:a.v%b.v};
+      case '<': return {t:'bool',v:a.v<b.v};
+      case '<=': return {t:'bool',v:a.v<=b.v};
+      case '>': return {t:'bool',v:a.v>b.v};
+      case '>=': return {t:'bool',v:a.v>=b.v};
+      case '==': return {t:'bool',v:a.v===b.v};
+      case '!=': return {t:'bool',v:a.v!==b.v};
+      case '&&': return {t:'bool',v:!!a.v&&!!b.v};
+      default: return {t:'bool',v:!!a.v||!!b.v};
+    }
+  }
+  const level=(ops,sub)=>()=>{ let a=sub(); while(ops.indexOf(peek())>=0){ const op=next(); a=bin(op,a,sub()); } return a; };
+  function index(a,i,checked){
+    if(a.t!=='arr'&&a.t!=='vec') throw 'only arrays and vectors can be indexed';
+    if(i>=0&&i<a.v.length) return typeOf(a.v[i]);
+    if(checked) return R('throws std::out_of_range (index '+i+', size '+a.v.length+')');
+    return R((garbage!=null?garbage:'unknown')+' (index '+i+' is outside the valid range 0 to '+(a.v.length-1)+': undefined behaviour)');
+  }
+  function primary(){
+    const tk=next();
+    if(tk===undefined) throw 'the expression is incomplete';
+    if(tk==='('){ const a=orE(); expect(')'); return a; }
+    if(/^\d/.test(tk)) return {t:tk.indexOf('.')>=0?'double':'int',v:parseFloat(tk)};
+    if(tk==='static_cast'){ expect('<'); const ty=next(); expect('>'); expect('('); const a=num(orE()); expect(')');
+      if(ty==='double') return {t:'double',v:a.v}; if(ty==='int') return {t:'int',v:Math.trunc(a.v)}; throw 'that cast is not supported here'; }
+    if(tk==='true'||tk==='false') return {t:'bool',v:tk==='true'};
+    if(/^[A-Za-z_]/.test(tk)){
+      if(!Object.prototype.hasOwnProperty.call(vars,tk)) throw "'"+tk+"' is not available in this frame";
+      return typeOf(vars[tk]);
+    }
+    throw "unexpected '"+tk+"'";
+  }
+  function postfix(){
+    let a=primary();
+    for(;;){
+      if(peek()==='['){ next(); const i=num(orE()); expect(']'); a=index(a,i.v,false); }
+      else if(peek()==='.'){
+        next(); const name=next(); expect('('); let arg=null; if(peek()!==')') arg=orE(); expect(')');
+        if(a.t!=='vec'&&a.t!=='string') throw 'member functions are only supported on vectors and strings';
+        if(name==='size'||name==='length') a={t:'int',v:a.v.length};
+        else if(name==='at'&&arg&&a.t==='vec') a=index(a,num(arg).v,true);
+        else throw "the member '"+name+"' is not supported here";
+      } else return a;
+    }
+  }
+  function unary(){
+    if(peek()==='!'){ next(); return {t:'bool',v:!num(unary()).v}; }
+    if(peek()==='-'){ next(); const a=num(unary()); return {t:a.t,v:-a.v}; }
+    return postfix();
+  }
+  const mul=level(['*','/','%'],unary), add=level(['+','-'],mul), rel=level(['<','<=','>','>='],add),
+        eq=level(['==','!='],rel), andE=level(['&&'],eq);
+  function orE(){ let a=andE(); while(peek()==='||'){ next(); a=bin('||',a,andE()); } return a; }
+  const r=orE();
+  if(p<toks.length) throw "unexpected '"+toks[p]+"'";
+  return r;
+}
+
+/* ---------- exercises ---------- */
+const CF='compiler (simulated)';
+function sumLoop(t,v,arr,limitOk,headSub,bodySub,accName,garbage){
+  const head=t.L(headSub), body=t.L(bodySub);
+  t.s(head,v); v.i=0;
+  while(limitOk(v.i)){
+    t.s(body,v);
+    v[accName]+= v.i<arr.length?arr[v.i]:garbage;
+    t.s(head,v); v.i++;
+  }
+  delete v.i;
+}
+function capTrace(start){
+  return function(t){
+    const v={}, head=t.L('for (int i'), a=t.L('total += steps[i]'), c=t.L('if (steps[i] > highest)'), d=t.L('highest = steps[i];');
+    t.s(t.L('const int DAYS'),v); v.DAYS=6;
+    t.s(t.L('int steps'),v); v.steps=[4200,7350,6100,9800,5600,8050];
+    t.s(t.L('int highest'),v); v.highest=start;
+    t.s(t.L('int total'),v); v.total=0;
+    t.s(head,v); v.i=1;
+    while(v.i<6){
+      t.s(a,v); v.total+=v.steps[v.i];
+      t.s(c,v);
+      if(v.steps[v.i]>v.highest){ t.s(d,v); v.highest=v.steps[v.i]; }
+      t.s(head,v); v.i++;
+    }
+    delete v.i;
+    t.s(t.L('double average'),v); v.average=D(v.total/6);
+    t.s(t.L('"Days counted'),v); t.o('Days counted: 6\n');
+    t.s(t.L('"Highest: "'),v); t.o('Highest: '+v.highest+'\n');
+    t.s(t.L('"Average: "'),v); t.o('Average: '+(v.total/6)+'\n');
+    t.s(t.L('return 0'),v);
+  };
+}
+function norm(x){ return String(x).trim().replace(/\s+/g,' ').replace(/ ?([^\w ]) ?/g,'$1'); }
+
+const EX=[
+{
+  id:'e01', file:'01_missing_semicolon.cpp', title:'Missing semicolon', kind:'compile', group:'Compile-time errors',
+  scenario:'The program should calculate the floor area of a room measuring 4.5 m by 6.0 m and print the width, the length and the area (27 square metres).',
+  code:String.raw`#include <iostream>
+
+// Calculates the area of a rectangular room.
+int main() {
+    double width = 4.5;
+    double length = 6.0;
+
+    double area = width * length
+
+    std::cout << "Room width:  " << width << " m\n";
+    std::cout << "Room length: " << length << " m\n";
+    std::cout << "Floor area:  " << area << " square metres\n";
+
+    return 0;
+}`,
+  diag:{at:'"Room width:',tok:'std',msg:"expected ',' or ';' before 'std'"},
+  fixedRun:['Room width:  4.5 m','Room length: 6 m','Floor area:  27 square metres'],
+  hyps:[
+    {t:'Line 10 uses std::cout incorrectly, exactly where the compiler points.'},
+    {t:'An earlier statement was never finished, and the compiler only noticed when it reached line 10.',ok:true},
+    {t:'The <iostream> header does not provide std::cout.'},
+    {t:'Two double values cannot be multiplied together.'}
+  ],
+  cause:'The declaration on line 8 has no terminating semicolon. The compiler keeps reading and only reports the problem at the next token, on line 10.',
+  invest:'The build failed, so no executable exists to debug. In this lab the debug controls replay the order in which the compiler reads the file. Step through and watch the <b>expecting</b> entry in VARIABLES.',
+  bp:'double area', watch:[],
+  hints:[
+    'Read the message literally: the compiler expected something <em>before</em> the token <code>std</code>. What comes before it?',
+    'Blank lines and white space mean nothing to the compiler. The statement before line 10 is the place to look.',
+    'Compare the ends of lines 5, 6 and 8. One of them is missing a character.'
+  ],
+  fault:'double area',
+  near:{'"Room width:':'Line 10 is where the compiler reported the error, yet the statement itself is correct. The message says something was expected before this line began.'},
+  fixes:[
+    {c:'double area = width * length,',fb:'A comma tells the compiler that another variable declaration follows, so it would then try to read std as a variable name and fail again.'},
+    {c:'double area = (width * length)',fb:'Brackets change nothing here. The statement still has no terminator.'},
+    {c:'double area = width * length;',ok:true,fb:'The semicolon terminates the declaration, so line 10 is now read as a new statement.'},
+    {c:'double area; width * length',fb:'This declares area without a value and leaves a second unterminated statement, so the same error remains.'}
+  ],
+  accept:['double area = length * width;','double area = (width * length);','double area{width * length};'],
+  patch:c=>c.replace('double area = width * length','double area = width * length;'),
+  explain:'A C++ statement ends at a semicolon, not at the end of a line. After reading <code>width * length</code> the compiler was still inside the declaration and skipped the blank line. Only when it met <code>std</code> on line 10 could it tell that something was wrong, so that is the line number it printed. The reported line is where the compiler <em>noticed</em> the fault, which is not always where the fault <em>is</em>.',
+  habit:'When a syntax error makes no sense on the reported line, inspect the end of the previous statement.',
+  trace(t){
+    const C=(ph,st,ex,res)=>({phase:R(ph),statement:R(st),expecting:R(ex),status:R(res)});
+    const a=t.L('double area');
+    t.s(t.L('double width'),C('reading a declaration','double width = 4.5;',"nothing more: ';' found",'statement complete'),CF);
+    t.s(t.L('double length'),C('reading a declaration','double length = 6.0;',"nothing more: ';' found",'statement complete'),CF);
+    t.s(a,C('reading a declaration','double area = width * length',"',' or ';'",'statement still open at the end of the line'),CF);
+    t.s(a+1,C('skipping white space','double area = width * length',"',' or ';'",'blank lines are ignored'),CF);
+    t.s(a+2,C('reading the next token','double area = width * length std',"',' or ';'","error: found 'std' instead"),CF);
+  }
+},
+{
+  id:'e02', file:'02_scope.cpp', title:'Undeclared identifier (scope)', kind:'compile', group:'Compile-time errors',
+  scenario:'The program should report whether a student has passed (a mark of 40 or more) and then print a grade band for every student: Fail, Pass or Distinction. For a mark of 64 the band should be Pass.',
+  code:String.raw`#include <iostream>
+#include <string>
+
+// Reports whether a student has passed and shows the grade band.
+int main() {
+    int mark = 64;
+
+    if (mark >= 40) {
+        std::string band = "Pass";
+        if (mark >= 70) {
+            band = "Distinction";
+        }
+        std::cout << "Result: pass\n";
+    } else {
+        std::cout << "Result: fail\n";
+    }
+
+    std::cout << "Band: " << band << "\n";
+
+    return 0;
+}`,
+  diag:{at:'"Band: "',tok:'band',msg:"'band' was not declared in this scope"},
+  fixedRun:['Result: pass','Band: Pass'],
+  hyps:[
+    {t:'The name band is spelt differently on line 18 from where it is declared.'},
+    {t:'The <string> header is missing, so std::string does not exist.'},
+    {t:'band is declared inside the if block, so it no longer exists when line 18 uses it.',ok:true},
+    {t:'A std::string cannot be sent to std::cout.'}
+  ],
+  cause:'band is declared inside the braces of the if block. Its scope ends at the closing brace, so the name is unknown on line 18.',
+  invest:'No executable exists, so the debug controls replay how the compiler tracks names as it reads the file. Step through and watch <b>names in scope</b> each time a brace opens or closes.',
+  bp:'std::string band', watch:[],
+  hints:[
+    'The declaration of band clearly exists. The question is where the name is visible.',
+    'Every pair of braces creates a block. A variable declared inside a block is destroyed at its closing brace.',
+    'band is declared on line 9, inside the if block that closes on line 14. Line 18 lies outside that block.'
+  ],
+  fault:'std::string band',
+  near:{'"Band: "':'Line 18 is where the error is reported, and using band here is reasonable. The fault lies in where band was declared.'},
+  fixes:[
+    {d:'Add a second declaration, std::string band; immediately before line 18.',fb:'That compiles, but it creates a different, empty variable. The program would print "Band: " with no value.'},
+    {d:'Move line 18 inside the if block, after line 13.',fb:'The error disappears, but failing students would no longer receive a band, which the scenario requires.'},
+    {d:'Declare std::string band = "Fail"; before the if statement, and change line 9 to the assignment band = "Pass";',ok:true,fb:'band now belongs to the block of main(), so it is visible in both branches and on the final output line.'},
+    {d:'Change line 18 to use std::band instead of band.',fb:'band is a local variable, not a member of the std namespace. This produces a different error.'}
+  ],
+  acceptRe:/^std::string band(=("[^"]*"|std::string\(\)))?;$/,
+  typePrompt:'Type the declaration of band that should be placed before the if statement on line 8 (line 9 then becomes a plain assignment):',
+  patch:c=>c.replace('    if (mark >= 40) {\n        std::string band = "Pass";','    std::string band = "Fail";\n\n    if (mark >= 40) {\n        band = "Pass";'),
+  explain:'A variable exists only from its declaration to the closing brace of the block that contains it. <code>band</code> was created inside the <code>if</code> block, so it had already been destroyed when the final <code>std::cout</code> statement tried to use it. Declaring the variable in the enclosing block, with a sensible initial value, makes it visible everywhere it is needed.',
+  habit:'For any "not declared" error, find the declaration first and then check which pair of braces encloses it.',
+  trace(t){
+    const C=(sc,names,note)=>({'current scope':R(sc),'names in scope':R(names),note:R(note)});
+    t.s(t.L('int mark'),C('block of main()','(none yet)','this line declares mark'),CF);
+    t.s(t.L('if (mark >= 40)'),C('block of main()','mark','the brace opens a new inner block'),CF);
+    t.s(t.L('std::string band'),C('if block','mark','this line declares band inside the if block'),CF);
+    t.s(t.L('band = "Distinction"'),C('nested if block','mark, band','inner blocks can see names from outer blocks'),CF);
+    t.s(t.L('} else {'),C('block of main()','mark','the if block has closed: band no longer exists'),CF);
+    t.s(t.L('"Band: "'),C('block of main()','mark',"error: looked up 'band' and found no declaration"),CF);
+  }
+},
+{
+  id:'e03', file:'03_type_mismatch.cpp', title:'Type mismatch', kind:'compile', group:'Compile-time errors',
+  scenario:'The program should read a student\'s age from the keyboard and report the year in which they turn 21. For an age of 19 in 2025 the answer should be 2027.',
+  code:String.raw`#include <iostream>
+#include <string>
+
+// Reads a student's age and reports the year in which they turn 21.
+int main() {
+    const int currentYear = 2025;
+    std::string input;
+
+    std::cout << "Enter your age: ";
+    std::getline(std::cin, input);
+
+    int age = input;
+
+    int yearsLeft = 21 - age;
+    std::cout << "You turn 21 in " << (currentYear + yearsLeft) << ".\n";
+
+    return 0;
+}`,
+  diag:{at:'int age',tok:'input',msg:"cannot convert 'std::string' {aka 'std::__cxx11::basic_string<char>'} to 'int' in initialization"},
+  fixedRun:['Enter your age: 19','You turn 21 in 2027.'],
+  hyps:[
+    {t:'std::getline cannot read from std::cin.'},
+    {t:'The variable input has not been given a value before it is used.'},
+    {t:'A const int cannot be used in arithmetic.'},
+    {t:'Text held in a std::string is being stored directly in an int, and no automatic conversion exists.',ok:true}
+  ],
+  cause:'Line 12 initialises an int from a std::string. C++ has no implicit conversion between the two types, so the text must be converted explicitly.',
+  invest:'No executable exists, so the debug controls replay the type checks made by the compiler. Step through and compare <b>target type</b> with <b>value type</b> on each statement.',
+  bp:'int age', watch:[],
+  hints:[
+    'The message names two types. Identify which variable has which type.',
+    'This time the reported line is accurate. Look at what is on each side of the = sign on line 12.',
+    'The characters "19" are text, not a number. The standard library offers std::stoi to convert a string to an int.'
+  ],
+  fault:'int age',
+  near:{'std::string input':'Declaring input as a std::string is appropriate, because std::getline reads text. The fault is in how that text is used afterwards.'},
+  fixes:[
+    {c:'int age = (int)input;',fb:'A cast cannot turn a std::string object into a number. The compiler rejects this with an "invalid cast" error.'},
+    {c:'int age = std::stoi(input);',ok:true,fb:'std::stoi parses the digits in the string and returns the equivalent int.'},
+    {c:'std::string age = input;',fb:'This line would compile, but the error simply moves to line 14, where 21 - age attempts arithmetic on text.'},
+    {c:'int age = input.length();',fb:'This compiles, yet it stores the number of characters typed (2 for "19"), not the age itself.'}
+  ],
+  accept:['int age = stoi(input);','int age{std::stoi(input)};'],
+  patch:c=>c.replace('int age = input;','int age = std::stoi(input);'),
+  explain:'C++ is statically typed: every variable has one type, fixed at compile time. A <code>std::string</code> holding the characters <code>"19"</code> is not the number 19, and the language will not guess a conversion. <code>std::stoi</code> (string to integer) performs the conversion explicitly. Notice that two of the alternative fixes compile but give the wrong behaviour: silencing the compiler is not the same as fixing the program.',
+  habit:'Read a type error as "cannot convert A to B", then find A and B in the reported line before changing anything.',
+  trace(t){
+    const C=(st,l,r,res)=>({statement:R(st),'target type':R(l),'value type':R(r),result:R(res)});
+    t.s(t.L('const int currentYear'),C('const int currentYear = 2025;','const int','int','types match'),CF);
+    t.s(t.L('std::string input'),C('std::string input;','std::string','(empty string by default)','accepted'),CF);
+    t.s(t.L('std::getline'),C('std::getline(std::cin, input);','std::string&','std::string','types match'),CF);
+    t.s(t.L('int age'),C('int age = input;','int','std::string','error: no conversion from std::string to int'),CF);
+  }
+},
+{
+  id:'e12', file:'04_missing_namespace.cpp', title:'Missing namespace qualifier', kind:'compile', group:'Compile-time errors',
+  scenario:'The program should print a student\'s name and the number of credits taken this year: four modules of 30 credits each, giving 120.',
+  code:String.raw`#include <iostream>
+#include <string>
+
+// Greets a student and shows how many credits they are taking.
+int main() {
+    std::string name = "Priya";
+    int modules = 4;
+    int creditsPerModule = 30;
+
+    int totalCredits = modules * creditsPerModule;
+
+    std::cout << "Student: " << name << "\n";
+    cout << "Credits this year: " << totalCredits << "\n";
+
+    return 0;
+}`,
+  diag:{at:'cout << "Credits',tok:'cout',msg:"'cout' was not declared in this scope; did you mean 'std::cout'?"},
+  fixedRun:['Student: Priya','Credits this year: 120'],
+  hyps:[
+    {t:'The <iostream> header has not been included, so cout does not exist.'},
+    {t:'The statement on line 12 is missing its semicolon, as in exercise 1.'},
+    {t:'cout belongs to the std namespace, and line 13 leaves out the std:: qualifier.',ok:true},
+    {t:'totalCredits has not been declared before it is printed.'}
+  ],
+  cause:'cout is declared inside the std namespace. Line 13 writes the bare name, and the compiler does not search std unless it is told to.',
+  invest:'No executable exists, so the debug controls replay how the compiler looks up each name. Step through and compare the <b>name</b> and <b>searched in</b> entries for lines 12 and 13.',
+  bp:'std::cout << "Student', watch:[],
+  hints:[
+    'The compiler offers a suggestion at the end of its message. Read it closely.',
+    'Lines 12 and 13 do almost the same job. What is the textual difference between them?',
+    'Names from the standard library live in the namespace std and must be written with the std:: prefix.'
+  ],
+  fault:'cout << "Credits',
+  near:{'std::cout << "Student':'Line 12 compiles without complaint. Compare it, character by character, with the line below.'},
+  fixes:[
+    {c:String.raw`std.cout << "Credits this year: " << totalCredits << "\n";`,fb:'The dot operator selects a member of an object. Namespaces are qualified with the scope operator, which is two colons.'},
+    {c:String.raw`Cout << "Credits this year: " << totalCredits << "\n";`,fb:'C++ is case sensitive, and no name Cout exists anywhere.'},
+    {c:String.raw`cout::std << "Credits this year: " << totalCredits << "\n";`,fb:'The namespace comes first and the name second: this is the wrong way round.'},
+    {c:String.raw`std::cout << "Credits this year: " << totalCredits << "\n";`,ok:true,fb:'The std:: prefix tells the compiler which namespace to search for cout.'}
+  ],
+  patch:c=>c.replace('    cout <<','    std::cout <<'),
+  explain:'The standard library places its names inside the namespace <code>std</code> so that they cannot clash with names chosen by the programmer. Including <code>&lt;iostream&gt;</code> makes <code>std::cout</code> available, but the bare name <code>cout</code> is only searched for in the current block and the global scope. Modern compilers often suggest the correction, as g++ did here. Writing <code>using namespace std;</code> would also remove the error, but it brings every standard name into scope and is discouraged in larger programs.',
+  habit:'Read the whole diagnostic, including any "did you mean" suggestion and note lines: the compiler frequently proposes the fix.',
+  trace(t){
+    const C=(n,where,res)=>({name:R(n),'searched in':R(where),result:R(res)});
+    t.s(t.L('std::string name'),C('std::string','namespace std','found (provided by <string>)'),CF);
+    t.s(t.L('int totalCredits'),C('modules, creditsPerModule','block of main()','both found'),CF);
+    t.s(t.L('std::cout << "Student'),C('std::cout','namespace std','found (provided by <iostream>)'),CF);
+    t.s(t.L('cout << "Credits'),C('cout','block of main(), then the global scope',"error: not found. Namespace std is not searched without the std:: prefix"),CF);
+  }
+},
+{
+  id:'e04', file:'04_off_by_one.cpp', title:'Off-by-one loop', kind:'runtime', group:'Logic and run-time errors', garbage:32767,
+  scenario:'The program should add up five module marks (72, 65, 88, 54 and 91) and print the total, which should be 370.',
+  code:String.raw`#include <iostream>
+
+// Adds up five module marks and prints the total.
+int main() {
+    const int COUNT = 5;
+    int marks[COUNT] = {72, 65, 88, 54, 91};
+    int total = 0;
+
+    for (int i = 0; i <= COUNT; i++) {
+        total += marks[i];
+    }
+
+    std::cout << "Marks entered: " << COUNT << "\n";
+    std::cout << "Total: " << total << "\n";
+
+    return 0;
+}`,
+  run:['Marks entered: 5','Total: 33137'], runNote:'The exact total varies between machines and runs.',
+  fixedRun:['Marks entered: 5','Total: 370'],
+  hyps:[
+    {t:'total starts with a leftover value because it is not initialised.'},
+    {t:'The += operator adds the index i instead of the array element.'},
+    {t:'The loop runs one time too many and reads a value from beyond the end of the array.',ok:true},
+    {t:'One of the marks in the array has been typed incorrectly.'}
+  ],
+  cause:'The condition i <= COUNT lets the loop run for i = 5, but the valid indexes are 0 to 4. marks[5] reads whatever happens to be in memory after the array.',
+  invest:'Set a breakpoint inside the loop and step through each iteration. Watch <b>i</b> and <b>total</b> in VARIABLES, and add the watch expressions below to see which element is read each time.',
+  bp:'total += marks[i]', watch:['marks[i]','i <= COUNT'],
+  hints:[
+    'Count how many times the loop body runs. How many marks are there?',
+    'An array of 5 elements has indexes 0 to 4. Which values of i does the condition allow?',
+    'On the final iteration i is 5. Look at the comparison operator in the for statement.'
+  ],
+  fault:'for (int i',
+  near:{'total += marks[i]':'This line is where the bad value is added, but it only does what the loop tells it to. Consider which line decides the values of i.'},
+  fixes:[
+    {c:'for (int i = 1; i <= COUNT; i++) {',fb:'Starting at 1 skips the first mark and still reads marks[5], so two faults are now present.'},
+    {c:'for (int i = 0; i < COUNT - 1; i++) {',fb:'The loop now stops one element early, at index 3, and the total would be 279.'},
+    {c:'for (int i = 0; i <= COUNT + 1; i++) {',fb:'This reads two elements beyond the array instead of one.'},
+    {c:'for (int i = 0; i < COUNT; i++) {',ok:true,fb:'With i < COUNT the loop visits indexes 0 to 4, exactly the five valid elements.'}
+  ],
+  cond:'i == 5',
+  accept:['for (int i = 0; i < COUNT; ++i) {','for (int i = 0; i <= COUNT - 1; i++) {','for (int i = 0; i <= COUNT - 1; ++i) {','for (int i = 0; i != COUNT; i++) {','for (int i = 0; i != COUNT; ++i) {','for (int i = 0; i < 5; i++) {'],
+  patch:c=>c.replace('i <= COUNT','i < COUNT'),
+  explain:'Array indexes start at 0, so an array of <code>COUNT</code> elements ends at index <code>COUNT - 1</code>. The condition <code>i &lt;= COUNT</code> allowed a sixth iteration that read <code>marks[5]</code>. C++ does not check array bounds: it simply read whatever bytes followed the array, which is undefined behaviour and explains the nonsensical total.',
+  habit:'At every loop, check the first and the last value of the loop variable against the valid index range.',
+  trace(t){
+    const v={};
+    t.s(t.L('const int COUNT'),v); v.COUNT=5;
+    t.s(t.L('int marks'),v); v.marks=[72,65,88,54,91];
+    t.s(t.L('int total'),v); v.total=0;
+    sumLoop(t,v,v.marks,i=>i<=5,'for (int i','total += marks[i]','total',32767);
+    t.s(t.L('"Marks entered'),v); t.o('Marks entered: 5\n');
+    t.s(t.L('"Total: "'),v); t.o('Total: '+v.total+'\n');
+    t.s(t.L('return 0'),v);
+  }
+},
+{
+  id:'e05', file:'05_assignment_condition.cpp', title:'Assignment in a condition', kind:'runtime', group:'Logic and run-time errors',
+  scenario:'The program should compare an entered PIN (1234) with the stored PIN (4821) and print "Access denied", because the two do not match.',
+  code:String.raw`#include <iostream>
+
+// Checks a four-digit PIN and reports whether access is granted.
+int main() {
+    const int storedPin = 4821;
+    int enteredPin = 1234;
+    bool accessGranted = false;
+
+    if (enteredPin = storedPin) {
+        accessGranted = true;
+    }
+
+    if (accessGranted) {
+        std::cout << "Access granted\n";
+    } else {
+        std::cout << "Access denied\n";
+    }
+
+    std::cout << "PIN checked: " << enteredPin << "\n";
+
+    return 0;
+}`,
+  run:['Access granted','PIN checked: 4821'],
+  fixedRun:['Access denied','PIN checked: 1234'],
+  hyps:[
+    {t:'The condition on line 9 changes enteredPin instead of comparing it.',ok:true},
+    {t:'accessGranted is initialised to the wrong value.'},
+    {t:'The if and else branches on lines 13 to 17 are the wrong way round.'},
+    {t:'A const int cannot be compared with an ordinary int.'}
+  ],
+  cause:'Line 9 uses = (assignment) where == (comparison) was intended. It copies storedPin into enteredPin, and the non-zero result counts as true.',
+  invest:'Set a breakpoint on the first if statement and step over it. Keep an eye on <b>enteredPin</b> in VARIABLES before and after that single step.',
+  bp:'if (enteredPin', watch:['enteredPin == storedPin'],
+  hints:[
+    'The last line of output is a clue: which PIN does the program claim to have checked?',
+    'A condition should only inspect values. Step over line 9 and see whether any variable changes.',
+    'Compare the operator on line 9 with the operator normally used to test for equality.'
+  ],
+  fault:'if (enteredPin',
+  near:{'accessGranted = true':'This assignment is intended. The fault is that the program reaches this line when it should not.','if (accessGranted)':'This test behaves correctly for the value it is given. The wrong value was set earlier.'},
+  fixes:[
+    {c:'if (enteredPin != storedPin) {',fb:'This does compare, but with the opposite meaning: access would be granted for every wrong PIN.'},
+    {c:'if (enteredPin == storedPin) {',ok:true,fb:'The == operator compares the two values and leaves both unchanged.'},
+    {c:'if (storedPin = enteredPin) {',fb:'storedPin is const, so this fails to compile. It is still an assignment, not a comparison.'},
+    {c:'if (enteredPin >= storedPin) {',fb:'Any entered PIN larger than the stored one would be accepted.'}
+  ],
+  accept:['if (storedPin == enteredPin) {'],
+  wall:{at:'if (enteredPin',tok:'enteredPin = storedPin',msg:'suggest parentheses around assignment used as truth value [-Wparentheses]'},
+  patch:c=>c.replace('enteredPin = storedPin','enteredPin == storedPin'),
+  explain:'In C++ an assignment is an expression with a value. <code>enteredPin = storedPin</code> copied 4821 into <code>enteredPin</code> and then produced 4821, and any non-zero value is treated as <code>true</code>. The condition therefore always succeeded and also corrupted the data it was meant to test. Building with <code>g++ -Wall</code> produces a warning for this pattern.',
+  habit:'Enable compiler warnings (-Wall -Wextra) and treat a variable that changes inside a condition as a red flag.',
+  trace(t){
+    const v={};
+    t.s(t.L('const int storedPin'),v); v.storedPin=4821;
+    t.s(t.L('int enteredPin'),v); v.enteredPin=1234;
+    t.s(t.L('bool accessGranted'),v); v.accessGranted=false;
+    t.s(t.L('if (enteredPin'),v); v.enteredPin=4821;
+    t.s(t.L('accessGranted = true'),v); v.accessGranted=true;
+    t.s(t.L('if (accessGranted)'),v);
+    t.s(t.L('"Access granted'),v); t.o('Access granted\n');
+    t.s(t.L('"PIN checked'),v); t.o('PIN checked: 4821\n');
+    t.s(t.L('return 0'),v);
+  }
+},
+{
+  id:'e06', file:'06_integer_division.cpp', title:'Integer division', kind:'runtime', group:'Logic and run-time errors',
+  scenario:'The program should calculate the average of five quiz scores (7, 8, 6, 9 and 9). The sum is 39, so the average should be 7.8.',
+  code:String.raw`#include <iostream>
+
+// Calculates the average of five quiz scores.
+int main() {
+    const int COUNT = 5;
+    int scores[COUNT] = {7, 8, 6, 9, 9};
+    int sum = 0;
+
+    for (int i = 0; i < COUNT; i++) {
+        sum += scores[i];
+    }
+
+    double average = sum / COUNT;
+
+    std::cout << "Sum: " << sum << "\n";
+    std::cout << "Average: " << average << "\n";
+
+    return 0;
+}`,
+  run:['Sum: 39','Average: 7'],
+  fixedRun:['Sum: 39','Average: 7.8'],
+  hyps:[
+    {t:'The loop misses one of the scores, so the sum is too small.'},
+    {t:'std::cout rounds double values to whole numbers when printing.'},
+    {t:'A double cannot store the value 7.8 exactly, so it is cut down to 7.'},
+    {t:'Dividing one int by another discards the fractional part before the result is stored.',ok:true}
+  ],
+  cause:'sum and COUNT are both int, so sum / COUNT is an integer division that gives 7. The fraction is lost before the result is converted to double.',
+  invest:'Check the loop first to confirm the sum, then set a breakpoint on the division. Add the watch expressions below and compare their values.',
+  bp:'double average', watch:['sum / COUNT','static_cast<double>(sum) / COUNT'],
+  hints:[
+    'The sum printed is correct, so the loop can be eliminated. Which line is left?',
+    'Look at the types of the two operands of the division, not the type of the variable that receives the result.',
+    'int / int yields an int. At least one operand must be a double before the division takes place.'
+  ],
+  fault:'double average',
+  near:{'"Average: "':'The output statement prints the value it is given faithfully. Check the value of average in VARIABLES before this line runs.'},
+  fixes:[
+    {c:'double average = static_cast<double>(sum / COUNT);',fb:'The division still happens between two int values. The cast is applied afterwards, to a result that has already lost its fraction.'},
+    {c:'float average = sum / COUNT;',fb:'Changing the type of the receiving variable does not alter how the division itself is carried out.'},
+    {c:'double average = static_cast<double>(sum) / COUNT;',ok:true,fb:'Converting sum first makes the division double / int, which is carried out in floating point.'},
+    {c:'double average = sum % COUNT;',fb:'The % operator gives the remainder of the division (4), not the average.'}
+  ],
+  accept:['double average = sum / static_cast<double>(COUNT);','double average = static_cast<double>(sum) / static_cast<double>(COUNT);','double average = (double)sum / COUNT;','double average = sum / (double)COUNT;','double average = double(sum) / COUNT;','double average = sum / double(COUNT);','double average = sum * 1.0 / COUNT;','double average = 1.0 * sum / COUNT;','double average = sum / 5.0;'],
+  patch:c=>c.replace('double average = sum / COUNT;','double average = static_cast<double>(sum) / COUNT;'),
+  explain:'The type of an arithmetic expression is decided by its operands, not by where the result is stored. With two <code>int</code> operands the <code>/</code> operator performs integer division: 39 / 5 is 7 and the remainder is discarded. Only then is 7 converted to the <code>double</code> 7.0. Converting one operand with <code>static_cast&lt;double&gt;</code> first makes the whole division floating point.',
+  habit:'When a result looks rounded, evaluate the sub-expressions in the WATCH panel and check the type of each operand.',
+  trace(t){
+    const v={};
+    t.s(t.L('const int COUNT'),v); v.COUNT=5;
+    t.s(t.L('int scores'),v); v.scores=[7,8,6,9,9];
+    t.s(t.L('int sum'),v); v.sum=0;
+    sumLoop(t,v,v.scores,i=>i<5,'for (int i','sum += scores[i]','sum',0);
+    t.s(t.L('double average'),v); v.average=D(7);
+    t.s(t.L('"Sum: "'),v); t.o('Sum: 39\n');
+    t.s(t.L('"Average: "'),v); t.o('Average: 7\n');
+    t.s(t.L('return 0'),v);
+  }
+},
+{
+  id:'e07', file:'07_uninitialised.cpp', title:'Uninitialised accumulator', kind:'runtime', group:'Logic and run-time errors', garbage:0,
+  scenario:'The program should total the prices of four basket items (250, 120, 399 and 75 pence) and print 844 pence.',
+  code:String.raw`#include <iostream>
+
+// Totals the items in a shopping basket.
+int main() {
+    const int ITEMS = 4;
+    int prices[ITEMS] = {250, 120, 399, 75};   // prices in pence
+    int total;
+
+    for (int i = 0; i < ITEMS; i++) {
+        total += prices[i];
+    }
+
+    std::cout << "Items: " << ITEMS << "\n";
+    std::cout << "Total: " << total << " pence\n";
+
+    return 0;
+}`,
+  run:['Items: 4','Total: 22689 pence'], runNote:'The exact total varies between machines and runs.',
+  fixedRun:['Items: 4','Total: 844 pence'],
+  hyps:[
+    {t:'The loop reads one element beyond the end of the prices array.'},
+    {t:'total is never given a starting value, so the additions begin from whatever was already in memory.',ok:true},
+    {t:'The comment on line 6 interferes with the array values.'},
+    {t:'An int is too small to hold a total of 844.'}
+  ],
+  cause:'total is declared without an initial value. A local int is not set to zero automatically, so the loop adds the prices to an arbitrary leftover value.',
+  invest:'Set a breakpoint on the for statement so that execution pauses before the loop begins. Inspect every variable in VARIABLES before any addition has taken place.',
+  bp:'for (int i', watch:['total - 844'],
+  hints:[
+    'Check the loop bounds first to rule out the off-by-one fault met earlier. Then look at the state before the loop starts.',
+    'What is the value of total before the first addition? What should it be?',
+    'Compare the declarations on lines 5, 6 and 7. One of them does not assign a value.'
+  ],
+  fault:'int total',
+  near:{'total += prices[i]':'The addition is correct. Check what total contains before this line runs for the first time.','for (int i':'The loop visits indexes 0 to 3, which is right for four items. The fault lies before the loop.'},
+  fixes:[
+    {c:'int total = prices[0];',fb:'The loop still starts at index 0, so the first price would be counted twice (1094 pence).'},
+    {c:'int total = 1;',fb:'The variable is now initialised, but to the wrong starting value. The result would be 845.'},
+    {c:'const int total = 0;',fb:'A const variable cannot be modified, so total += prices[i] would no longer compile.'},
+    {c:'int total = 0;',ok:true,fb:'An accumulator for a sum must start at zero, the identity value for addition.'}
+  ],
+  accept:['int total{0};','int total{};','int total(0);'],
+  wall:{at:'total += prices[i]',tok:'total',msg:"'total' may be used uninitialized [-Wmaybe-uninitialized]"},
+  patch:c=>c.replace('int total;','int total = 0;'),
+  explain:'Local variables of built-in types are not initialised automatically in C++. <code>int total;</code> reserves memory but leaves whatever bit pattern was already there, and reading it is undefined behaviour. The loop then added 844 to that arbitrary number. The result can differ from run to run, and can even appear correct by chance, which makes this fault hard to spot by testing alone.',
+  habit:'Initialise every variable at the point of declaration, and inspect accumulators in the debugger before the loop begins.',
+  trace(t){
+    const v={};
+    t.s(t.L('const int ITEMS'),v); v.ITEMS=4;
+    t.s(t.L('int prices'),v); v.prices=[250,120,399,75];
+    t.s(t.L('int total'),v); v.total=21845;
+    sumLoop(t,v,v.prices,i=>i<4,'for (int i','total += prices[i]','total',0);
+    t.s(t.L('"Items: "'),v); t.o('Items: 4\n');
+    t.s(t.L('"Total: "'),v); t.o('Total: '+v.total+' pence\n');
+    t.s(t.L('return 0'),v);
+  }
+},
+{
+  id:'e08', file:'08_infinite_loop.cpp', title:'Infinite loop', kind:'runtime', group:'Logic and run-time errors',
+  scenario:'The program should count down from 5 to 1, printing each number, and then print "Lift-off!".',
+  code:String.raw`#include <iostream>
+
+// Counts down from 5 and then announces lift-off.
+int main() {
+    int count = 5;
+
+    std::cout << "Countdown started\n";
+
+    while (count > 0) {
+        std::cout << count << "...\n";
+        count - 1;
+    }
+
+    std::cout << "Lift-off!\n";
+
+    return 0;
+}`,
+  run:['Countdown started','5...','5...','5...','5...','5...','5...','5...','5...','5...','5...'], runNote:'The output never stops. The program was terminated with Ctrl+C.',
+  fixedRun:['Countdown started','5...','4...','3...','2...','1...','Lift-off!'],
+  hyps:[
+    {t:'The condition count > 0 is written the wrong way round.'},
+    {t:'std::cout prints the same line repeatedly because of the "\\n" at the end.'},
+    {t:'count never changes inside the loop, so the condition stays true for ever.',ok:true},
+    {t:'count should start at 0 instead of 5.'}
+  ],
+  cause:'The statement count - 1; calculates 4 and throws the result away. count is never updated, so count > 0 remains true and the loop cannot end.',
+  invest:'Use Step Over to go round the loop two or three times and watch <b>count</b>. Pressing Continue with no breakpoint lets the program run away, just as it did in the terminal: use Pause or Stop to regain control.',
+  bp:'while (count', watch:['count > 0','count - 1'],
+  hints:[
+    'A loop ends when its condition becomes false. Which variable does the condition depend on?',
+    'Step round the loop twice. Does the value of count differ between the first and second pass?',
+    'Line 11 computes a value. Where does that value go?'
+  ],
+  fault:'count - 1;',
+  near:{'while (count':'The condition is sensible for a countdown. The question is why it never becomes false.','<< count <<':'This line only prints count. Look for the line that was meant to change it.'},
+  fixes:[
+    {c:'count + 1;',fb:'This is still an expression whose result is discarded, so count remains 5.'},
+    {c:'count == count - 1;',fb:'== compares the two values and yields false. Nothing is stored in count.'},
+    {c:'count = count - 1;',ok:true,fb:'The assignment stores the new value back into count, so the condition eventually becomes false. Writing count--; is equivalent.'},
+    {c:'int count = count - 1;',fb:'This declares a new, separate variable inside the loop body that hides the outer count. The loop condition still tests the outer one.'}
+  ],
+  accept:['count--;','--count;','count -= 1;'],
+  wall:{at:'count - 1;',tok:'count - 1',msg:'statement has no effect [-Wunused-value]'},
+  patch:c=>c.replace('count - 1;','count = count - 1;'),
+  explain:'<code>count - 1;</code> is a valid statement: it evaluates the expression and then discards the result. Because nothing was assigned, <code>count</code> stayed at 5 and the loop condition could never become false. Every loop needs a control variable that moves towards the exit condition on each pass. Building with <code>g++ -Wall</code> reports "statement has no effect" for this line.',
+  habit:'For every loop, identify the control variable and confirm in the debugger that it changes on each iteration.',
+  trace(t){
+    const v={};
+    t.s(t.L('int count'),v); v.count=5;
+    t.s(t.L('"Countdown started'),v); t.o('Countdown started\n');
+    t.loop();
+    t.s(t.L('while (count'),v);
+    t.s(t.L('<< count <<'),v); t.o('5...\n');
+    t.s(t.L('count - 1;'),v);
+  }
+},
+{
+  id:'e13', file:'10_logical_operator.cpp', title:'Wrong logical operator', kind:'runtime', group:'Logic and run-time errors',
+  scenario:'The program should validate an exam mark, which must lie between 0 and 100 inclusive. A mark of 135 should be reported as invalid.',
+  code:String.raw`#include <iostream>
+
+// Validates an exam mark, which must lie between 0 and 100 inclusive.
+int main() {
+    int mark = 135;
+    bool valid = false;
+
+    if (mark >= 0 || mark <= 100) {
+        valid = true;
+    }
+
+    if (valid) {
+        std::cout << "Mark accepted: " << mark << "\n";
+    } else {
+        std::cout << "Invalid mark: " << mark << "\n";
+    }
+
+    return 0;
+}`,
+  run:['Mark accepted: 135'],
+  fixedRun:['Invalid mark: 135'],
+  hyps:[
+    {t:'The mark is never compared with 100.'},
+    {t:'valid is initialised to the wrong value.'},
+    {t:'The comparison >= should be > so that 0 is excluded.'},
+    {t:'The two tests are joined with "or", so one true test is enough and every number passes.',ok:true}
+  ],
+  cause:'The condition uses || (or) where && (and) was needed. Every integer is either at least 0 or at most 100, so the condition is true for any mark.',
+  invest:'Pause on the first if statement and add the watch expressions below. Evaluate each half of the condition separately, and then the whole condition.',
+  bp:'if (mark >= 0', watch:['mark >= 0','mark <= 100','mark >= 0 || mark <= 100','mark >= 0 && mark <= 100'],
+  hints:[
+    'Read the condition aloud in plain English. Is that the rule the scenario describes?',
+    'Try to think of any number for which the condition on line 8 would be false.',
+    'For a value to lie inside a range, both tests must hold at the same time. Which operator expresses "both"?'
+  ],
+  fault:'if (mark >= 0',
+  near:{'valid = true':'This assignment is intended for valid marks. The fault is that the program reaches it for a mark of 135.','if (valid)':'This test behaves correctly for the value it is given. The wrong value was set earlier.'},
+  fixes:[
+    {c:'if (0 <= mark <= 100) {',fb:'This compiles, but it does not mean what it does in mathematics. 0 <= mark is evaluated first and gives true (1), and 1 <= 100 is always true.'},
+    {c:'if (mark >= 0 && mark <= 100) {',ok:true,fb:'With && both tests must be true, so only marks inside the range are accepted.'},
+    {c:'if (mark > 0 || mark < 100) {',fb:'The operator is still "or", so every number passes. A mark of 0 or 100 would also be handled differently for no reason.'},
+    {c:'if (mark <= 0 && mark >= 100) {',fb:'No number is both at most 0 and at least 100, so every mark would now be rejected.'}
+  ],
+  accept:['if (mark <= 100 && mark >= 0) {','if (0 <= mark && mark <= 100) {','if (mark >= 0 and mark <= 100) {','if (!(mark < 0 || mark > 100)) {'],
+  patch:c=>c.replace('mark >= 0 || mark <= 100','mark >= 0 && mark <= 100'),
+  explain:'<code>||</code> is true when <em>either</em> operand is true. For 135 the first test, <code>mark &gt;= 0</code>, is already true, so the second is not even evaluated. A range check needs <code>&amp;&amp;</code>, which is true only when <em>both</em> operands are true. Faults of this kind are easy to read past because the code looks plausible: evaluating each half separately in the WATCH panel removes the guesswork.',
+  habit:'Test every condition with a value that should fail as well as one that should pass, and evaluate compound conditions piece by piece in the WATCH panel.',
+  trace(t){
+    const v={};
+    t.s(t.L('int mark'),v); v.mark=135;
+    t.s(t.L('bool valid'),v); v.valid=false;
+    t.s(t.L('if (mark >= 0'),v);
+    t.s(t.L('valid = true'),v); v.valid=true;
+    t.s(t.L('if (valid)'),v);
+    t.s(t.L('"Mark accepted'),v); t.o('Mark accepted: 135\n');
+    t.s(t.L('return 0'),v);
+  }
+},
+{
+  id:'e14', file:'11_missing_braces.cpp', title:'Missing braces', kind:'runtime', group:'Logic and run-time errors',
+  scenario:'The program should deduct a late penalty of 10 marks, but only from late submissions. This submission is not late, so the final mark should remain 68.',
+  code:String.raw`#include <iostream>
+
+// Applies a late penalty of 10 marks, but only to late submissions.
+int main() {
+    int mark = 68;
+    bool late = false;
+
+    std::cout << "Original mark: " << mark << "\n";
+
+    if (late)
+        std::cout << "Late submission: penalty applied\n";
+        mark = mark - 10;
+
+    std::cout << "Final mark: " << mark << "\n";
+
+    return 0;
+}`,
+  run:['Original mark: 68','Final mark: 58'],
+  fixedRun:['Original mark: 68','Final mark: 68'],
+  hyps:[
+    {t:'late has been initialised to true by mistake.'},
+    {t:'Only the first statement after the if belongs to it, so line 12 runs whether or not the submission is late.',ok:true},
+    {t:'The subtraction on line 12 is calculated incorrectly.'},
+    {t:'Sending mark to std::cout changes its value.'}
+  ],
+  cause:'Without braces, an if statement controls only the single statement that follows it. Line 12 is indented as though it belongs to the if, but it is executed unconditionally.',
+  invest:'Set a breakpoint on the if statement and use Step Over. Note carefully which line the yellow highlight moves to next, and which line it skips.',
+  bp:'if (late)', watch:['late','mark'],
+  hints:[
+    'The "penalty applied" message was not printed, yet the mark still fell. What does that suggest about lines 11 and 12?',
+    'Step over line 10 and watch where execution goes. Indentation is for human readers: the compiler ignores it.',
+    'How many statements does an if control when there are no braces?'
+  ],
+  fault:'if (late)',
+  near:{'mark = mark - 10':'This is the statement that runs when it should not, and it is correct in itself. The fault lies in the line that ought to be controlling it.'},
+  typeStart:'if (late)',
+  acceptRe:/^if\((late|late==true)\)\{$/,
+  typePrompt:'Retype line 10 so that both indented statements become the body of the if (the matching closing brace will be added after line 12):',
+  fixes:[
+    {d:'Indent line 12 by a further four spaces.',fb:'Indentation has no meaning to the compiler, so the behaviour would be unchanged.'},
+    {d:'Move line 12 above line 10.',fb:'The penalty would still be applied to every submission, only earlier.'},
+    {d:'Add an opening brace at the end of line 10 and a closing brace after line 12, so that both statements form the body of the if.',ok:true,fb:'The braces group both statements into one block, so the message and the penalty are now applied together or not at all.'},
+    {d:'Change the condition on line 10 to if (!late).',fb:'This reverses when the message is printed. The penalty on line 12 is still outside the if.'}
+  ],
+  wall:{at:'if (late)',tok:'if',msg:"this 'if' clause does not guard... [-Wmisleading-indentation]"},
+  patch:c=>c.replace('    if (late)\n','    if (late) {\n').replace('        mark = mark - 10;\n','        mark = mark - 10;\n    }\n'),
+  explain:'An <code>if</code> without braces governs exactly one statement. The compiler read the program as "if late, print the message", followed by an unconditional <code>mark = mark - 10;</code>. The indentation suggested otherwise, but white space carries no meaning in C++. Stepping made this visible: execution jumped from line 10 straight to line 12, skipping only line 11.',
+  habit:'Always use braces for the body of an if, else, for or while, even when it holds a single statement.',
+  trace(t){
+    const v={};
+    t.s(t.L('int mark'),v); v.mark=68;
+    t.s(t.L('bool late'),v); v.late=false;
+    t.s(t.L('"Original mark'),v); t.o('Original mark: 68\n');
+    t.s(t.L('if (late)'),v);
+    t.s(t.L('mark = mark - 10'),v); v.mark=58;
+    t.s(t.L('"Final mark'),v); t.o('Final mark: 58\n');
+    t.s(t.L('return 0'),v);
+  }
+},
+{
+  id:'e15', file:'12_switch_fallthrough.cpp', title:'Switch fall-through', kind:'runtime', group:'Logic and run-time errors',
+  scenario:'The program should convert a grade letter into grade points: A is worth 4, B is worth 3 and C is worth 2. For grade B it should print 3 points.',
+  code:String.raw`#include <iostream>
+
+// Converts a grade letter into the grade points it is worth.
+int main() {
+    char grade = 'B';
+    int points = 0;
+
+    switch (grade) {
+        case 'A':
+            points = 4;
+            break;
+        case 'B':
+            points = 3;
+        case 'C':
+            points = 2;
+            break;
+        default:
+            points = 0;
+    }
+
+    std::cout << "Grade " << grade << " is worth " << points << " points\n";
+
+    return 0;
+}`,
+  run:['Grade B is worth 2 points'],
+  fixedRun:['Grade B is worth 3 points'],
+  hyps:[
+    {t:'A switch statement cannot be used with a char value.'},
+    {t:'The default branch always runs last and resets points.'},
+    {t:'Nothing stops execution after the assignment for grade B, so it carries on into the code for grade C.',ok:true},
+    {t:'The value in grade is not really B when the switch is reached.'}
+  ],
+  cause:'There is no break after points = 3; on line 13. Execution falls through into case C and overwrites points with 2.',
+  invest:'Set a breakpoint on the switch statement and step through it. Watch <b>points</b> closely and count how many assignments are executed for a single grade.',
+  bp:'switch (grade)', watch:['points'],
+  hints:[
+    'Step through the switch and count how many times points changes.',
+    'A case label marks a place to jump to. It does not mark a place to stop.',
+    'Compare the code for case A with the code for case B. One of them ends differently.'
+  ],
+  fault:'points = 3;',
+  near:{'points = 2;':'This assignment is correct for grade C. The question is why it is reached for grade B.',"case 'C':":'A case label is only a marker. Execution passes straight through it unless something earlier stops it.',"case 'B':":'The label is correct, and execution does jump here. Follow what happens after the assignment beneath it.'},
+  typeStart:'points = 3;',
+  acceptRe:/^points=3;break;$/,
+  typePrompt:'A statement is missing after line 13. Retype line 13 with the missing statement added on the same line:',
+  fixes:[
+    {d:"Move the whole of case 'C' above case 'B'.",fb:'Grade B would then fall through into default and be given 0 points.'},
+    {d:'Add break; after line 13.',ok:true,fb:'The break leaves the switch as soon as the points for grade B have been assigned.'},
+    {d:'Remove the break on line 16.',fb:'Both B and C would then fall through into default, giving 0 points.'},
+    {d:'Change line 15 to points = 3;',fb:'Grade B would print 3, but so would grade C. The fall-through is still present.'}
+  ],
+  wall:{at:'points = 3;',tok:'points = 3',msg:'this statement may fall through [-Wimplicit-fallthrough=]'},
+  patch:c=>c.replace('            points = 3;\n','            points = 3;\n            break;\n'),
+  explain:'In a <code>switch</code>, a <code>case</code> label is only an entry point. Once execution has jumped to <code>case \'B\'</code> it continues downwards through every following statement until it meets a <code>break</code> or the end of the switch. Here it assigned 3 and then immediately assigned 2. Building with <code>-Wextra</code> reports the fall-through.',
+  habit:'End every case with a break (or a return), and when stepping through a switch count the assignments made.',
+  trace(t){
+    const v={};
+    t.s(t.L('char grade'),v); v.grade={t:'char',v:"'B'"};
+    t.s(t.L('int points'),v); v.points=0;
+    t.s(t.L('switch (grade)'),v);
+    t.s(t.L('points = 3;'),v); v.points=3;
+    t.s(t.L('points = 2;'),v); v.points=2;
+    t.s(t.L('break;',2),v);
+    t.s(t.L('"Grade "'),v); t.o('Grade B is worth 2 points\n');
+    t.s(t.L('return 0'),v);
+  }
+},
+{
+  id:'e09', file:'09_vector_bounds.cpp', title:'Vector out of bounds', kind:'runtime', group:'Intermediate', garbage:61585,
+  scenario:'The program stores seven daily temperatures and should print the reading for a chosen day, where days are numbered 1 to 7. For day 7 the expected output is 17 C.',
+  code:String.raw`#include <iostream>
+#include <vector>
+
+// Prints the temperature recorded on a chosen day of the week.
+int main() {
+    std::vector<int> temps = {14, 16, 15, 19, 21, 18, 17};
+    int day = 7;   // days are numbered 1 to 7
+
+    std::cout << "Days recorded: " << temps.size() << "\n";
+
+    int reading = temps[day];
+
+    std::cout << "Day " << day << " temperature: " << reading << " C\n";
+
+    return 0;
+}`,
+  run:['Days recorded: 7','Day 7 temperature: 61585 C'], runNote:'The temperature shown varies between machines and runs. No error message was produced.',
+  fixedRun:['Days recorded: 7','Day 7 temperature: 17 C'],
+  hyps:[
+    {t:'The vector was created with only six elements.'},
+    {t:'Day 7 is used directly as an index, but the valid indexes are 0 to 6, so the program reads past the end of the vector.',ok:true},
+    {t:'temps.size() changes the contents of the vector.'},
+    {t:'An int cannot hold a temperature value.'}
+  ],
+  cause:'Days are numbered from 1 but vector indexes start at 0. temps[7] is one past the last element, and operator[] performs no bounds check, so an arbitrary value is read.',
+  invest:'Pause on the line that reads from the vector. Add the watch expressions below to compare the unchecked operator[] with the checked member function .at().',
+  bp:'int reading', watch:['temps.size()','temps[day]','temps.at(day)','temps.at(day - 1)'],
+  hints:[
+    'Expand temps in VARIABLES. Which index holds the value 17?',
+    'Compare the value of day with the largest valid index of a vector whose size is 7.',
+    'Evaluate temps.at(day) in the WATCH panel. Unlike operator[], .at() checks the index and reports a failure.'
+  ],
+  fault:'int reading',
+  near:{'int day':'Day 7 is a valid input according to the scenario. The fault lies in how the day number is turned into an index.'},
+  fixes:[
+    {c:'int reading = temps.at(day);',fb:'The .at() call detects the bad index and throws std::out_of_range, so the fault is now reported instead of hidden. The index is still wrong, however, and the program terminates.'},
+    {c:'int reading = temps[day + 1];',fb:'This moves the index even further beyond the end of the vector.'},
+    {c:'int reading = temps.at(day - 1);',ok:true,fb:'Subtracting 1 converts the day number to a zero-based index, and .at() guarantees that any future bad index is reported immediately.'},
+    {c:'int reading = temps[temps.size()];',fb:'size() is 7, so this is the same out-of-bounds index written differently.'}
+  ],
+  accept:['int reading = temps[day - 1];'],
+  patch:c=>c.replace('temps[day]','temps.at(day - 1)'),
+  explain:'<code>operator[]</code> on a <code>std::vector</code> does not check its index. Reading <code>temps[7]</code> is undefined behaviour: the program printed an arbitrary value and carried on as though nothing were wrong. The member function <code>.at()</code> performs the same access with a bounds check and throws <code>std::out_of_range</code> when the index is invalid. Writing <code>temps[day - 1]</code> would also produce 17, but <code>.at(day - 1)</code> is the more defensive choice because a future mistake would fail loudly instead of silently.',
+  habit:'Prefer .at() while developing: a program that stops at the fault is far easier to debug than one that continues with bad data.',
+  trace(t){
+    const v={};
+    t.s(t.L('std::vector<int> temps'),v); v.temps=V([14,16,15,19,21,18,17]);
+    t.s(t.L('int day'),v); v.day=7;
+    t.s(t.L('"Days recorded'),v); t.o('Days recorded: 7\n');
+    t.s(t.L('int reading'),v); v.reading=61585;
+    t.s(t.L('" temperature: "'),v); t.o('Day 7 temperature: 61585 C\n');
+    t.s(t.L('return 0'),v);
+  }
+},
+{
+  id:'e10', file:'10_pass_by_value.cpp', title:'Pass by value', kind:'runtime', group:'Intermediate',
+  scenario:'The program should apply a 25% discount to a price of 80 by calling applyDiscount, and then print the discounted price, which should be 60.',
+  code:String.raw`#include <iostream>
+
+// Applies a percentage discount to a price.
+void applyDiscount(double price, double percent) {
+    double reduction = price * percent / 100.0;
+    price = price - reduction;
+}
+
+int main() {
+    double price = 80.0;
+    double discount = 25.0;
+
+    std::cout << "Original price: " << price << "\n";
+
+    applyDiscount(price, discount);
+
+    std::cout << "Discounted price: " << price << "\n";
+
+    return 0;
+}`,
+  run:['Original price: 80','Discounted price: 80'],
+  fixedRun:['Original price: 80','Discounted price: 60'],
+  hyps:[
+    {t:'The formula inside applyDiscount calculates the reduction incorrectly.'},
+    {t:'applyDiscount is never actually called.'},
+    {t:'The function changes its own copy of price, so the variable in main() is left untouched.',ok:true},
+    {t:'The two arguments are passed in the wrong order.'}
+  ],
+  cause:'price is passed by value, so applyDiscount receives a copy. The copy is reduced to 60 and then destroyed when the function returns. The variable in main() never changes.',
+  invest:'Set a breakpoint on the call and use <b>Step Into</b> (F11) to enter the function. The CALL STACK now shows two frames: select each one in turn and compare the value of <b>price</b> in both.',
+  bp:'applyDiscount(price, discount)', watch:['price','price * percent / 100.0'],
+  hints:[
+    'Step Over treats the call as a single step. Use Step Into to see what happens inside the function.',
+    'While paused inside applyDiscount, click the main() frame in CALL STACK. How many variables named price exist at that moment?',
+    'Look at how the first parameter is declared on line 4. Does the function receive the caller\'s variable or a copy of it?'
+  ],
+  fault:'void applyDiscount',
+  near:{'price = price - reduction':'This assignment works, and price really does become 60 here. The question is which price it changes.','applyDiscount(price, discount);':'The call passes the right arguments in the right order. The fault is in how the function receives them.'},
+  fixes:[
+    {c:'void applyDiscount(const double& price, double percent) {',fb:'A const reference avoids the copy but forbids modification, so the assignment on line 6 would no longer compile.'},
+    {c:'void applyDiscount(double& price, double percent) {',ok:true,fb:'The & makes price a reference to the caller\'s variable, so the assignment inside the function changes the original.'},
+    {c:'void applyDiscount(double price, double& percent) {',fb:'The reference has been applied to the wrong parameter. price is still copied.'},
+    {c:'double applyDiscount(double price, double percent) {',fb:'Returning the new price is a valid design, but it also needs a return statement and a caller that stores the result. This change alone does neither.'}
+  ],
+  patch:c=>c.replace('void applyDiscount(double price,','void applyDiscount(double& price,'),
+  explain:'By default C++ passes arguments <em>by value</em>: each parameter is a new variable initialised with a copy of the argument. The call stack made this visible, with one <code>price</code> in the frame of <code>main()</code> and a separate one in the frame of <code>applyDiscount</code>. Declaring the parameter as <code>double&amp;</code> passes it <em>by reference</em>, so both names refer to the same variable. Returning the new value and assigning it in <code>main()</code> is an equally respectable design, provided that both ends of the call are changed.',
+  habit:'When a function appears to do nothing, step into it and compare the frames in the CALL STACK.',
+  trace(t){
+    const m={}, fn='applyDiscount(double price, double percent)';
+    const call=t.L('applyDiscount(price, discount)');
+    t.s(t.L('double price = 80.0'),m); m.price=D(80);
+    t.s(t.L('double discount'),m); m.discount=D(25);
+    t.s(t.L('"Original price'),m); t.o('Original price: 80\n');
+    t.s(call,m);
+    const f={price:D(80),percent:D(25)};
+    const fr=l=>t.sf([{fn:'main()',l:call,v:m},{fn:fn,l:l,v:f}]);
+    fr(t.L('double reduction')); f.reduction=D(20);
+    fr(t.L('price = price - reduction')); f.price=D(60);
+    fr(t.L('price = price - reduction')+1);
+    t.s(t.L('"Discounted price'),m); t.o('Discounted price: 80\n');
+    t.s(t.L('return 0'),m);
+  }
+},
+{
+  id:'e16', file:'15_shadowed_variable.cpp', title:'Shadowed variable', kind:'runtime', group:'Intermediate',
+  scenario:'The program should add a delivery charge of 4.99 to any order under 50 pounds. For an order of 32.50 it should print Delivery: 4.99 and Amount due: 37.49.',
+  code:String.raw`#include <iostream>
+
+// Adds a delivery charge to an order when the order is under 50 pounds.
+int main() {
+    double orderTotal = 32.50;
+    double charge = 0.0;
+
+    if (orderTotal < 50.0) {
+        double charge = 4.99;
+        std::cout << "Delivery charge applies\n";
+    }
+
+    double amountDue = orderTotal + charge;
+
+    std::cout << "Order total: " << orderTotal << "\n";
+    std::cout << "Delivery: " << charge << "\n";
+    std::cout << "Amount due: " << amountDue << "\n";
+
+    return 0;
+}`,
+  run:['Delivery charge applies','Order total: 32.5','Delivery: 0','Amount due: 32.5'],
+  fixedRun:['Delivery charge applies','Order total: 32.5','Delivery: 4.99','Amount due: 37.49'],
+  hyps:[
+    {t:'The condition on line 8 is false, so the block is skipped.'},
+    {t:'Line 9 creates a second variable named charge inside the block, and the original one is never changed.',ok:true},
+    {t:'Two double values cannot be added accurately.'},
+    {t:'charge is used on line 13 before it has been given any value.'}
+  ],
+  cause:'Line 9 begins with a type name, so it declares a new variable that hides (shadows) the outer charge. The new variable is destroyed at the closing brace and the outer one is still 0.',
+  invest:'Set a breakpoint inside the if block and step through it. Count the entries named <b>charge</b> in VARIABLES while execution is inside the block, and again after the closing brace.',
+  bp:'double charge = 4.99', watch:['charge','orderTotal + charge'],
+  hints:[
+    'The message on line 10 was printed, so the block did run. What happened to the 4.99?',
+    'While paused on line 10, look at VARIABLES. How many variables are called charge?',
+    'Compare line 9 with an ordinary assignment. Which extra word does it begin with?'
+  ],
+  fault:'double charge = 4.99',
+  near:{'double amountDue':'The addition is correct for the values it receives. Check which charge it reads, and what that variable holds.','double charge = 0.0':'The outer declaration is needed, and 0 is a sensible default. Look at what happens to the charge afterwards.'},
+  fixes:[
+    {c:'const double charge = 4.99;',fb:'This is still a declaration of a new variable inside the block. Making it const does not connect it to the outer one.'},
+    {c:'static double charge = 4.99;',fb:'A static local is still a separate variable from the outer charge, so the output would be unchanged.'},
+    {c:'charge = 4.99;',ok:true,fb:'Without the type name this is an assignment to the existing outer variable, not a declaration of a new one.'},
+    {c:'double charge == 4.99;',fb:'== is a comparison and cannot appear in a declaration, so this would not compile.'}
+  ],
+  wall:{at:'double charge = 4.99',tok:'charge',msg:"unused variable 'charge' [-Wunused-variable]"},
+  patch:c=>c.replace('        double charge = 4.99;','        charge = 4.99;'),
+  explain:'A statement that begins with a type name is a <em>declaration</em>. Inside the block, <code>double charge = 4.99;</code> created a second variable with the same name as the outer one. The inner variable shadowed the outer for the remainder of the block and was destroyed at the closing brace, leaving the outer <code>charge</code> at 0. This is the mirror image of the scope fault in exercise 2: there a name was missing, here there is one too many. The <code>-Wshadow</code> option reports shadowing directly.',
+  habit:'When a variable refuses to change, check whether the line that sets it is an assignment or an accidental second declaration.',
+  trace(t){
+    const v={}, inner='charge (inner block)';
+    t.s(t.L('double orderTotal'),v); v.orderTotal=D(32.5);
+    t.s(t.L('double charge = 0.0'),v); v.charge=D(0);
+    t.s(t.L('if (orderTotal'),v);
+    t.s(t.L('double charge = 4.99'),v); v[inner]=D(4.99);
+    t.s(t.L('"Delivery charge applies'),v); t.o('Delivery charge applies\n');
+    t.s(t.L('    }'),v); delete v[inner];
+    t.s(t.L('double amountDue'),v); v.amountDue=D(32.5);
+    t.s(t.L('"Order total'),v); t.o('Order total: 32.5\n');
+    t.s(t.L('"Delivery: "'),v); t.o('Delivery: 0\n');
+    t.s(t.L('"Amount due'),v); t.o('Amount due: 32.5\n');
+    t.s(t.L('return 0'),v);
+  }
+},
+{
+  id:'e17', file:'16_runaway_recursion.cpp', title:'Runaway recursion', kind:'runtime', group:'Intermediate',
+  endMsg:'In the real program the calls continue for many thousands of levels until the stack is exhausted: Segmentation fault (core dumped).',
+  scenario:'The function sumOdd should add the odd numbers from n down to 1, so sumOdd(5) should give 5 + 3 + 1 = 9 and the program should print Sum: 9.',
+  code:String.raw`#include <iostream>
+
+// Adds the odd numbers from n down to 1, so sumOdd(5) gives 5 + 3 + 1 = 9.
+int sumOdd(int n) {
+    if (n == 0) {
+        return 0;
+    }
+    return n + sumOdd(n - 2);
+}
+
+int main() {
+    int start = 5;
+
+    std::cout << "Adding odd numbers from " << start << "\n";
+
+    int result = sumOdd(start);
+
+    std::cout << "Sum: " << result << "\n";
+
+    return 0;
+}`,
+  run:['Adding odd numbers from 5','Segmentation fault (core dumped)'], runNote:'The program crashed before it could print the sum.',
+  fixedRun:['Adding odd numbers from 5','Sum: 9'],
+  hyps:[
+    {t:'A function is not allowed to call itself in C++.'},
+    {t:'The base case should return 1 instead of 0.'},
+    {t:'result is too small to hold the sum.'},
+    {t:'n goes 5, 3, 1, -1 and never equals 0, so the function never stops calling itself.',ok:true}
+  ],
+  cause:'n decreases in steps of 2 from an odd number, so it passes from 1 to -1 without ever being exactly 0. The base case is never met and the recursion continues until the call stack overflows.',
+  invest:'Set a breakpoint on the if statement and use <b>Step Into</b> (F11) repeatedly. Watch the CALL STACK grow, and select different frames to read the value of <b>n</b> in each call.',
+  bp:'if (n == 0)', cond:'n < 0', watch:['n','n == 0','n <= 0'],
+  hints:[
+    'A segmentation fault in a recursive program very often means that the recursion never ended.',
+    'Write down the value of n in each successive call, starting from 5.',
+    'Does the sequence of n values ever contain the exact value that the base case tests for?'
+  ],
+  fault:'if (n == 0)',
+  near:{'return n + sumOdd':'Subtracting 2 is exactly what the specification asks for, in order to visit only the odd numbers. The stopping test does not allow for that step size.','int result':'The call passes a valid argument. Follow what happens inside the function.'},
+  fixes:[
+    {c:'if (n == 1) {',fb:'The recursion would now stop, but it returns 0 when n is 1, so the final 1 is left out and the sum would be 8. An even starting value would also never stop.'},
+    {c:'if (n != 0) {',fb:'The very first call would return 0 immediately, so the program would print Sum: 0.'},
+    {c:'if (n <= 0) {',ok:true,fb:'The base case now covers every value at or below zero, so the recursion stops whichever way n arrives there.'},
+    {c:'if (n == 2) {',fb:'Starting from 5 the values are 5, 3, 1, -1 and so on. 2 is never reached, so the recursion still does not end.'}
+  ],
+  accept:['if (n < 1) {','if (n < 0) {','if (0 >= n) {','if (n <= 0)'],
+  patch:c=>c.replace('if (n == 0)','if (n <= 0)'),
+  explain:'Every recursive function needs a base case that is certain to be reached. Here the test was <code>n == 0</code>, but <code>n</code> fell in steps of 2 from an odd starting value: 5, 3, 1, -1, -3 and onwards. It stepped over 0 and the test was never true. Each call adds a frame to the call stack, and when the stack is full the operating system stops the program with a segmentation fault. Testing a range (<code>n &lt;= 0</code>) instead of a single value makes the base case robust.',
+  habit:'For every recursive function, trace the argument values by hand and confirm that the base case is actually met, preferably with a range test.',
+  trace(t){
+    const m={}, call=t.L('int result'), ifL=t.L('if (n == 0)'), retL=t.L('return n + sumOdd');
+    t.s(t.L('int start'),m); m.start=5;
+    t.s(t.L('"Adding odd'),m); t.o('Adding odd numbers from 5\n');
+    t.s(call,m);
+    const fr=[{fn:'main()',l:call,v:m}];
+    for(let n=5;n>=-15;n-=2){
+      fr.push({fn:'sumOdd(int n)',l:ifL,v:{n:n}}); t.sf(fr);
+      fr[fr.length-1].l=retL; t.sf(fr);
+    }
+  }
+},
+{
+  id:'e11', file:'17_capstone_two_faults.cpp', title:'Capstone: two faults', kind:'runtime', group:'Capstone', garbage:0, stillWrong:true,
+  scenario:'The program should report the highest of six daily step counts (4200, 7350, 6100, 9800, 5600 and 8050) and their average. The expected output is Highest: 9800 and Average: 6850. This program contains two separate faults: deal with the wrong Highest value first.',
+  code:String.raw`#include <iostream>
+
+// Finds the highest of six daily step counts and the average of all six.
+int main() {
+    const int DAYS = 6;
+    int steps[DAYS] = {4200, 7350, 6100, 9800, 5600, 8050};
+    int highest;
+    int total = 0;
+
+    for (int i = 1; i < DAYS; i++) {
+        total += steps[i];
+        if (steps[i] > highest) {
+            highest = steps[i];
+        }
+    }
+
+    double average = static_cast<double>(total) / DAYS;
+
+    std::cout << "Days counted: " << DAYS << "\n";
+    std::cout << "Highest: " << highest << "\n";
+    std::cout << "Average: " << average << "\n";
+
+    return 0;
+}`,
+  run:['Days counted: 6','Highest: 32767','Average: 6150'], runNote:'The Highest value varies between machines and runs.',
+  fixedRun:['Days counted: 6','Highest: 9800','Average: 6150'],
+  hyps:[
+    {t:'The comparison on line 12 uses > where < was needed.'},
+    {t:'highest has no starting value, so every step count is compared with whatever was already in memory.',ok:true},
+    {t:'The array does not contain the value 9800.'},
+    {t:'An int is too small to hold a step count.'}
+  ],
+  cause:'highest is declared without an initial value. The leftover value happened to be larger than every step count, so the comparison never succeeded.',
+  invest:'Concentrate on <b>highest</b> only. Use the conditional breakpoint below to pause on the iteration that examines the largest count (9800), then step and see whether highest is updated.',
+  bp:'if (steps[i] > highest)', cond:'i == 3', watch:['steps[i]','steps[i] > highest'],
+  hints:[
+    'Which values could the Highest line legitimately print? Is 32767 one of them?',
+    'Inspect highest in VARIABLES before the loop has compared anything.',
+    'Compare the declarations on lines 7 and 8. Only one of them assigns a value.'
+  ],
+  fault:'int highest;',
+  near:{'for (int i':'Well spotted: this line does deserve suspicion and it will be revisited. It does not, however, explain the wrong Highest value. Deal with that first.','if (steps[i] > highest)':'The comparison is written correctly. Check what it is comparing against.'},
+  fixes:[
+    {c:'int highest = 99999;',fb:'No step count exceeds 99999, so the comparison would still never succeed.'},
+    {c:'int highest = 0;',ok:true,fb:'Every step count is greater than 0, so the first value examined replaces it and the true maximum emerges.'},
+    {c:'const int highest = 0;',fb:'A const variable cannot be assigned to on line 13, so the program would not compile.'},
+    {c:'int highest = steps[DAYS];',fb:'steps[DAYS] is one element beyond the end of the array, so an arbitrary value would be read once more.'}
+  ],
+  accept:['int highest{0};','int highest{};','int highest(0);','int highest = steps[0];','int highest = -1;'],
+  wall:{at:'if (steps[i] > highest)',tok:'steps[i] > highest',msg:"'highest' may be used uninitialized [-Wmaybe-uninitialized]"},
+  patch:c=>c.replace('int highest;','int highest = 0;'),
+  explain:'<code>highest</code> was never initialised, so the first comparison was made against an arbitrary leftover value. Because that value happened to be larger than every step count, the <code>if</code> condition was never true and the garbage was printed unchanged. One fault has now been removed, but that does not prove that the program is correct.',
+  habit:'After every fix, run the program again and check all of the output, not only the line that was wrong.',
+  trace:capTrace(32767),
+  part2:{
+    scenario:'The first fault has been fixed and Highest is now correct (9800). The average of the six step counts should be 6850, but the program still prints 6150. Form a fresh hypothesis for this second fault.',
+    run:['Days counted: 6','Highest: 9800','Average: 6150'], runNote:null,
+    fixedRun:['Days counted: 6','Highest: 9800','Average: 6850'],
+    hyps:[
+      {t:'The division on line 17 is an integer division that loses part of the result.'},
+      {t:'total is not initialised.'},
+      {t:'The loop starts at index 1, so the first step count is never added to the total.',ok:true},
+      {t:'DAYS holds the wrong number of days.'}
+    ],
+    cause:'The loop starts at i = 1, so steps[0] (4200) is never added. The total is 36900 instead of 41100.',
+    invest:'Pause inside the loop on its first pass and read the value of <b>i</b>. Then let the loop finish and compare <b>total</b> with the expected sum of 41100.',
+    bp:'total += steps[i]', watch:['steps[i]','total / DAYS'],
+    hints:[
+      'The average is 700 too low, and 700 multiplied by 6 is 4200. Does that number appear anywhere in the program?',
+      'On the first pass through the loop body, what is the value of i?',
+      'Array indexes begin at 0. Look at the starting value in the for statement.'
+    ],
+    fault:'for (int i',
+    near:{'double average':'The cast makes this a floating point division, so the calculation is sound. The value of total going into it is wrong.','total += steps[i]':'The addition is correct for the element it is given. Consider which elements it is given.'},
+    fixes:[
+      {c:'for (int i = 0; i <= DAYS; i++) {',fb:'The first element is now included, but the loop also reads steps[6], which lies beyond the array.'},
+      {c:'for (int i = 1; i <= DAYS; i++) {',fb:'The first element is still skipped, and steps[6] beyond the array is now read as well.'},
+      {c:'for (int i = 0; i < DAYS; i++) {',ok:true,fb:'The loop now visits indexes 0 to 5, which covers all six elements.'},
+      {c:'for (int i = 2; i < DAYS; i++) {',fb:'Two elements would now be skipped instead of one.'}
+    ],
+    accept:['for (int i = 0; i < DAYS; ++i) {','for (int i = 0; i <= DAYS - 1; i++) {','for (int i = 0; i <= DAYS - 1; ++i) {','for (int i = 0; i != DAYS; i++) {','for (int i = 0; i != DAYS; ++i) {','for (int i = 0; i < 6; i++) {'],
+    patch:c=>c.replace('int i = 1;','int i = 0;'),
+    explain:'The loop began at index 1, so the first day was silently left out of the total. This fault was present from the start, but the more dramatic Highest value drew attention away from it. Real programs often contain several faults, and each fix changes the evidence: the cycle of run, hypothesise and investigate has to begin again after every change.',
+    habit:'Fix one fault at a time, then re-run and form a fresh hypothesis before changing anything else.',
+    trace:capTrace(0)
+  }
+}
+];
+
+/* Prepare exercises: resolve lines and build traces */
+function prep(e){
+  const lines=e.code.split('\n');
+  e.lines=lines;
+  const L=(sub,nth)=>{ let c=0; for(let i=0;i<lines.length;i++){ if(lines[i].indexOf(sub)>=0&&++c===(nth||1)) return i+1; } throw new Error('Line not found: '+sub+' in '+e.file); };
+  const steps=[]; let loopTo=null;
+  e.trace({
+    L:L,
+    s(line,vars,fn){ steps.push({l:line,f:[{fn:fn||'main()',l:line,v:clone(vars)}],o:''}); },
+    sf(frames){ steps.push({l:frames[frames.length-1].l,f:clone(frames),o:''}); },
+    o(text){ steps[steps.length-1].o+=text; },
+    loop(){ loopTo=steps.length; }
+  });
+  e.steps=steps; e.loopTo=loopTo;
+  e.faultLine=L(e.fault);
+  e.bpLine=L(e.bp);
+  e.nearLines={}; Object.keys(e.near||{}).forEach(k=>{ e.nearLines[L(k)]=e.near[k]; });
+  if(e.diag){ e.diag.line=L(e.diag.at); e.diag.col=lines[e.diag.line-1].indexOf(e.diag.tok)+1; }
+  e.fixedCode=e.patch(e.code);
+  if(e.fixedCode===e.code) throw new Error('Patch failed for '+e.file);
+  e.acceptN=(e.accept||[]).concat(e.fixes.filter(o=>o.ok&&o.c).map(o=>o.c)).map(norm);
+  if(e.wall){ e.wall.line=L(e.wall.at); e.wall.col=lines[e.wall.line-1].indexOf(e.wall.tok)+1; }
+}
+EX.forEach((e,i)=>{
+  e.file=String(i+1).padStart(2,'0')+e.file.replace(/^\d+/,'');
+  prep(e);
+  if(e.part2){
+    const p=Object.assign({},e,{wall:null,cond:null},e.part2,{code:e.fixedCode,isP2:true,stillWrong:false});
+    delete p.part2;
+    prep(p); e.p2=p;
+  }
+});
+const MAX=EX.length*10;
+
+/* ---------- state ---------- */
+const STAGES=['run','hyp','inv','loc','fix','rev'];
+const STAGE_NAMES=['Scenario','Run','Hypothesise','Investigate','Locate','Fix','Reveal'];
+const S={tab:'welcome',view:'debug',sideOpen:window.innerWidth>1150,cur:0,panel:'terminal',cursor:1,
+  progress:store.get('cdl.progress',{}),ex:{}};
+const dbg={active:false,running:false,i:0,frame:0,prev:null};
+const cur=()=>{ const e=EX[S.cur], s=S.ex[e.id]; return s&&s.part===2?e.p2:e; };
+function fresh(){ return {stage:'run',part:1,p1:null,hyp:null,selfRate:null,hints:0,steps:0,locTries:0,fixTries:0,bps:[],bpCond:{},watches:[],term:[],con:[],out:[],ran:false,fixed:false,sel:null,found:null,locMsg:null,fixMsg:null,fixSel:null,fixMode:'type',fixDraft:null,fixText:null,result:null}; }
+function st(){ const e=EX[S.cur]; return S.ex[e.id]||(S.ex[e.id]=fresh()); }
+function codeOf(e,s){
+  if(!s.fixed) return e.code;
+  if(s.fixText&&!e.acceptRe){ const ls=e.code.split('\n'); ls[e.faultLine-1]=ls[e.faultLine-1].match(/^\s*/)[0]+s.fixText; return ls.join('\n'); }
+  return e.fixedCode;
+}
+function hypLabel(h){ return {match:'Matched',miss:'Did not match','own-match':'Matched (self-assessed)','own-part':'Partly matched (self-assessed)','own-miss':'Did not match (self-assessed)',own:'Own words, not yet self-assessed'}[h]||''; }
+function bpHit(s,e,step){
+  if(s.bps.indexOf(step.l)<0) return false;
+  const c=s.bpCond[step.l]; if(!c) return true;
+  try{ const r=evalWatch(c,step.f[step.f.length-1].v,e.garbage); return r.t==='bool'?r.v:(r.t==='int'||r.t==='double')?r.v!==0:true; }
+  catch(x){ con('The condition on the line '+step.l+' breakpoint could not be evaluated ('+x+'), so execution paused.','info'); return true; }
+}
+function totalScore(){ return EX.reduce((a,e)=>a+((S.progress[e.id]||{}).score||0),0); }
+function doneCount(){ return EX.filter(e=>(S.progress[e.id]||{}).done).length; }
+
+let toastTimer=null;
+function toast(msg){ const t=$('toast'); t.textContent=msg; clearTimeout(toastTimer); toastTimer=setTimeout(()=>{t.textContent='';},5000); }
+function say(msg){ $('live').textContent=msg; }
+
+/* ---------- theme ---------- */
+function setTheme(th,save){
+  document.documentElement.setAttribute('data-theme',th);
+  const label='Theme: '+(th==='dark'?'Dark':'Light');
+  $('themeTop').textContent=label; $('themeBottom').textContent=label;
+  const al='Switch to '+(th==='dark'?'light':'dark')+' theme';
+  $('themeTop').setAttribute('aria-label',al); $('themeBottom').setAttribute('aria-label',al);
+  if(save) store.set('cdl.theme',th);
+}
+(function(){
+  let th=store.get('cdl.theme',null);
+  if(th!=='dark'&&th!=='light'){
+    let light=false; try{ light=window.matchMedia('(prefers-color-scheme: light)').matches; }catch(e){}
+    th=light?'light':'dark';
+  }
+  setTheme(th,false);
+})();
+
+/* ---------- icons and toolbar ---------- */
+const ICON={
+  cont:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 2H4v12H2.5zM6 2l8 6-8 6z"/></svg>',
+  pause:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h3v12H4zM9 2h3v12H9z"/></svg>',
+  over:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8.5a6 6 0 0 1 10.6-3.9V2H14v5H9V5.6h2.5A4.6 4.6 0 0 0 3.4 8.5z"/><circle cx="8" cy="12.5" r="2"/></svg>',
+  into:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.25 1h1.5v6.1l2.2-2.2L12 5.95 8 10 4 5.95 5.05 4.9l2.2 2.2z"/><circle cx="8" cy="13" r="2"/></svg>',
+  out:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M7.25 10h1.5V3.9l2.2 2.2L12 5.05 8 1 4 5.05 5.05 6.1l2.2-2.2z"/><circle cx="8" cy="13" r="2"/></svg>',
+  restart:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M12.6 8A4.6 4.6 0 1 1 11 4.5L9.3 6.2H14V1.5l-1.9 1.9A6.1 6.1 0 1 0 14.1 8z"/></svg>',
+  stop:'<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h10v10H3z"/></svg>'
+};
+const TB=[['cont','Continue (F5)','c-blue'],['over','Step Over (F10)','c-blue'],['into','Step Into (F11)','c-blue'],['out','Step Out (Shift+F11)','c-blue'],['restart','Restart (Ctrl+Shift+F5)','c-green'],['stop','Stop (Shift+F5)','c-red']];
+$('dbgbar').innerHTML='<button class="runbtn" data-act="run" data-tip="Run without debugging" aria-label="Run program without debugging">&#9654; Run</button><span class="sep" aria-hidden="true"></span>'+
+  TB.map(b=>'<button id="tb-'+b[0]+'" class="'+b[2]+'" data-act="'+b[0]+'" data-tip="'+b[1]+'" aria-label="'+b[1]+'">'+ICON[b[0]]+'</button>').join('');
+function renderToolbar(){
+  const code=S.tab==='code', a=dbg.active, r=dbg.running, c=$('tb-cont');
+  const tip=!a?'Start Debugging (F5)':r?'Pause (F6)':'Continue (F5)';
+  c.dataset.tip=tip; c.setAttribute('aria-label',tip); c.innerHTML=r?ICON.pause:ICON.cont;
+  c.disabled=!code;
+  ['over','into','out'].forEach(k=>{ $('tb-'+k).disabled=!code||!a||r; });
+  ['restart','stop'].forEach(k=>{ $('tb-'+k).disabled=!code||!a; });
+  document.querySelector('.runbtn').disabled=!code;
+}
+
+/* ---------- rendering: tabs, editor, documents ---------- */
+function renderTabs(){
+  const tabs=[['welcome','Welcome'],['code',cur().file],['toolkit','Debugging Toolkit'],['summary','Summary']];
+  $('tabs').innerHTML=tabs.map(t=>'<button role="tab" data-act="tab" data-tab="'+t[0]+'" aria-selected="'+(S.tab===t[0])+'" id="tab-'+t[0]+'">'+esc(t[1])+'</button>').join('');
+  const name=tabs.filter(t=>t[0]===S.tab)[0][1];
+  $('winTitle').textContent=name+' - Debugging Lab'; document.title=name+' - Debugging Lab';
+  const isCode=S.tab==='code';
+  $('editor').hidden=!isCode; $('doc').hidden=isCode;
+  if(!isCode){ $('doc').innerHTML=S.tab==='welcome'?docWelcome():S.tab==='toolkit'?docToolkit():docSummary(); $('doc').scrollTop=0; }
+  renderToolbar();
+}
+function pausedStep(){ return dbg.active&&!dbg.running?cur().steps[dbg.i]:null; }
+function renderEditor(scroll){
+  const e=cur(), s=st();
+  const lines=codeOf(e,s).split('\n');
+  const orig=new Set(e.lines.map(x=>x.trim()));
+  const step=pausedStep();
+  const curL=step?step.l:0, frL=step&&dbg.frame<step.f.length-1?step.f[dbg.frame].l:0;
+  const showErr=e.diag&&s.ran&&!s.fixed;
+  $('code').innerHTML=lines.map((ln,i)=>{
+    const n=i+1; let cls='row';
+    if(n===S.cursor) cls+=' cursor';
+    if(s.fixed&&!orig.has(ln.trim())) cls+=' added';
+    if(s.stage==='loc'&&s.sel===n) cls+=' pick';
+    if(!s.fixed&&s.found===n) cls+=' found';
+    if(n===frL) cls+=' frm';
+    if(n===curL) cls+=' cur';
+    if(showErr&&e.diag.line===n) cls+=' haserr';
+    const bp=s.bps.indexOf(n)>=0;
+    return '<div class="'+cls+'" data-line="'+n+'"><button class="gut'+(s.bpCond[n]?' cond':'')+'" tabindex="-1" data-bp="'+n+'" aria-pressed="'+bp+'" aria-label="'+(bp?'Remove':'Add')+' breakpoint on line '+n+(bp&&s.bpCond[n]?' (condition: '+esc(s.bpCond[n])+')':'')+'"><span class="dot"></span></button><span class="ln">'+n+'</span><code class="src">'+(hl(ln)||' ')+'</code></div>';
+  }).join('');
+  if(scroll){ const r=$('code').querySelector('.row.cur')||$('code').querySelector('.row.cursor'); if(r&&r.scrollIntoView) r.scrollIntoView({block:'nearest'}); }
+  $('stPos').textContent='Ln '+S.cursor+', Col 1';
+}
+
+/* ---------- rendering: debug side bar ---------- */
+function frameVals(fr){ const o={}; Object.keys(fr.v).forEach(k=>{ o[k]=fmt(fr.v[k]); }); return o; }
+function renderDebug(){
+  const e=cur(), s=st(), step=pausedStep();
+  let h;
+  if(!dbg.active) h='<p class="empty">Not running. Start debugging to inspect the program state.</p>';
+  else if(dbg.running) h='<p class="empty">Running. Pause the program to inspect variables.</p>';
+  else{
+    const fr=step.f[dbg.frame], top=dbg.frame===step.f.length-1;
+    const prev=top&&dbg.prev&&dbg.prev.fn===fr.fn?dbg.prev.vals:null;
+    const keys=Object.keys(fr.v);
+    h='<div class="scope">'+(e.kind==='compile'?'Compiler state (simulated)':'Locals: '+esc(fr.fn.split('(')[0])+'()')+'</div><ul>';
+    if(!keys.length) h+='<li class="var"><span class="vv t-raw">(no variables declared yet)</span></li>';
+    keys.forEach(k=>{
+      const x=typeOf(fr.v[k]), val=fmt(x), ch=prev&&prev[k]!==val;
+      h+='<li class="var'+(ch?' chg':'')+'" title="'+esc(TYPE_NAME[x.t]||'')+'"><span class="vn">'+esc(k)+'</span>'+(x.t==='raw'?':':' =')+' <span class="vv t-'+x.t+'">'+esc(val)+'</span>'+(ch?'<span class="sr"> (changed)</span>':'')+'</li>';
+      if(x.t==='arr'||x.t==='vec') h+=x.v.map((el,i)=>'<li class="var sub"><span class="vn">['+i+']</span> = <span class="vv t-int">'+el+'</span></li>').join('');
+    });
+    h+='</ul>';
+  }
+  $('vVars').innerHTML=h;
+
+  $('vWatch').innerHTML=s.watches.length?s.watches.map((w,i)=>{
+    let val,cls='t-raw';
+    if(!step) val='not available';
+    else{ try{ const r=evalWatch(w,step.f[dbg.frame].v,e.garbage); val=fmt(r); cls='t-'+r.t; }catch(err){ val=String(err); cls='t-err'; } }
+    return '<li class="rowline"><span class="grow"><span class="vn">'+esc(w)+'</span>: <span class="vv '+cls+'">'+esc(val)+'</span></span><button class="xbtn" data-act="rm-watch" data-i="'+i+'" aria-label="Remove watch '+esc(w)+'">&#10005;</button></li>';
+  }).join(''):'<li class="empty">No watch expressions.</li>';
+
+  if(!dbg.active) h='<p class="empty">Not running.</p>';
+  else if(dbg.running) h='<p class="empty">Running</p>';
+  else h='<p class="empty">Paused</p><ul>'+step.f.map((fr,i)=>i).reverse().map(i=>{
+      const fr=step.f[i];
+      return '<li><button class="frame" data-act="frame" data-i="'+i+'" aria-current="'+(i===dbg.frame)+'"><span>'+esc(fr.fn.split('(')[0])+'</span><small>'+esc(e.file)+' : '+fr.l+'</small></button></li>';
+    }).join('')+'</ul>';
+  $('vStack').innerHTML=h;
+
+  $('vBps').innerHTML=s.bps.length?'<ul>'+s.bps.slice().sort((a,b)=>a-b).map(n=>{
+      const c=s.bpCond[n];
+      let r='<li class="rowline"><span class="bpdot" aria-hidden="true"></span><span class="grow">'+esc(e.file)+' : '+n+(c?' <span class="cond-note">when '+esc(c)+'</span>':'')+'</span><button class="xbtn" data-act="edit-cond" data-line="'+n+'" data-tip="Edit condition" aria-label="Edit condition for breakpoint on line '+n+'">if</button><button class="xbtn" data-act="rm-bp" data-line="'+n+'" aria-label="Remove breakpoint on line '+n+'">&#10005;</button></li>';
+      if(S.editBp===n) r+='<li class="watchform"><label class="sr" for="bpCondIn">Condition for the breakpoint on line '+n+'</label><input type="text" id="bpCondIn" autocomplete="off" placeholder="Condition, e.g. i == 5" value="'+esc(c||'')+'"><button class="btn sec2" data-act="save-cond" data-line="'+n+'">OK</button></li>';
+      return r;
+    }).join('')+'</ul><div class="watchform"><button class="btn sec2" data-act="clear-bps">Remove all</button></div>'
+    :'<p class="empty">No breakpoints. Click in the gutter or press F9.</p>';
+}
+
+/* ---------- rendering: explorer, panel, status ---------- */
+function progressHtml(){
+  const d=doneCount(), sc=totalScore();
+  return '<div class="gmeta"><span>Completed '+d+' of '+EX.length+'</span><span>Score '+sc+' / '+MAX+'</span></div><div class="pbar" role="progressbar" aria-label="Exercises completed" aria-valuemin="0" aria-valuemax="'+EX.length+'" aria-valuenow="'+d+'"><i style="width:'+(d*100/EX.length)+'%"></i></div>';
+}
+function renderExplorer(){
+  let h='<li><button data-act="tab" data-tab="welcome" aria-current="'+(S.tab==='welcome')+'"><span class="ic" aria-hidden="true">i</span>Welcome</button></li>';
+  EX.forEach((e,i)=>{
+    const done=(S.progress[e.id]||{}).done;
+    h+='<li><button data-act="open" data-i="'+i+'" aria-current="'+(S.tab==='code'&&S.cur===i)+'"><span class="ic" aria-hidden="true">C+</span>'+esc(e.file)+(done?'<span class="tick" aria-label="completed">&#10003;</span>':'')+'</button></li>';
+  });
+  h+='<li><button data-act="tab" data-tab="toolkit" aria-current="'+(S.tab==='toolkit')+'"><span class="ic" aria-hidden="true">?</span>Debugging Toolkit</button></li>';
+  h+='<li><button data-act="tab" data-tab="summary" aria-current="'+(S.tab==='summary')+'"><span class="ic" aria-hidden="true">#</span>Summary</button></li>';
+  $('files').innerHTML=h;
+  $('progSide').innerHTML=progressHtml();
+  $('stScore').textContent='Score: '+totalScore()+'/'+MAX;
+}
+function problems(){ const e=cur(), s=st(); return e.diag&&s.ran&&!s.fixed?[e.diag]:[]; }
+function renderPanel(){
+  const e=cur(), s=st(), pr=problems();
+  const tabs=[['terminal','Terminal'],['problems','Problems'],['output','Output'],['console','Debug Console']];
+  $('ptabs').innerHTML=tabs.map(t=>'<button role="tab" data-act="ptab" data-p="'+t[0]+'" aria-selected="'+(S.panel===t[0])+'">'+t[1]+(t[0]==='problems'&&pr.length?'<span class="badge">'+pr.length+'</span>':'')+'</button>').join('');
+  const b=$('pbody'); let h;
+  const lines=a=>a.map(l=>'<div class="'+(l.c||'')+'">'+(esc(l.t)||' ')+'</div>').join('');
+  if(S.panel==='terminal') h=lines(s.term)+'<div class="cmd">student@lab:~/debugging$ <span class="note">'+(s.term.length?'':'(press Run to build and run '+esc(e.file)+')')+'</span></div>';
+  else if(S.panel==='problems') h=pr.length?pr.map(p=>'<button class="prob" data-act="problem" data-line="'+p.line+'"><span class="sev" aria-hidden="true">&#10006;</span><span>'+esc(p.msg)+' <small>'+esc(e.file)+' [Ln '+p.line+', Col '+p.col+']</small></span></button>').join('')
+      :'<div class="note">'+(s.ran?(e.kind==='runtime'||s.fixed?'No problems have been detected. A clean build only shows that the code is valid C++: logic errors are invisible to the compiler.':''):'No problems have been detected yet. Run the program to build it.')+'</div>';
+  else if(S.panel==='output') h=s.out.length?lines(s.out):'<div class="note">No build output yet.</div>';
+  else h=s.con.length?lines(s.con):'<div class="note">The debug console shows program output and debugger events during a debug session.</div>';
+  b.innerHTML=h; b.scrollTop=b.scrollHeight;
+  $('stProb').textContent='Errors: '+pr.length;
+}
+function renderStatus(){
+  const step=pausedStep();
+  $('status').classList.toggle('debug',dbg.active);
+  $('stState').textContent=!dbg.active?'Debugging Lab':dbg.running?'Debugging: running':'Debugging: paused at line '+step.l;
+}
+
+/* ---------- rendering: lab guide ---------- */
+function hypText(s,e){ return s.hyp?(s.hyp.own?s.hyp.text:e.hyps[s.hyp.i].t):''; }
+function hintsHtml(e,s){
+  let h='<h3>Hints</h3>';
+  for(let i=0;i<s.hints;i++) h+='<div class="hint"><b>Hint '+(i+1)+':</b> '+e.hints[i]+'</div>';
+  if(s.hints<3) h+='<p><button class="btn sec2" data-act="hint">Show hint '+(s.hints+1)+' of 3</button></p><p class="note" style="color:var(--muted)">Each of the first two hints used costs one independence mark.</p>';
+  return h;
+}
+function renderGuide(focus){
+  const e=cur(), s=st(), idx=s.stage==='mid'?6:STAGES.indexOf(s.stage)+1;
+  let h='<div aria-label="Overall progress">'+progressHtml()+'</div>';
+  h+='<h2 id="gTitle" tabindex="-1">Exercise '+(S.cur+1)+' of '+EX.length+': '+esc(e.title)+(EX[S.cur].p2?' (fault '+(s.part===2?2:1)+' of 2)':'')+'</h2>';
+  h+='<ol class="stepper" aria-label="Exercise stages">'+STAGE_NAMES.map((n,i)=>'<li class="'+(i<idx?'done':i===idx?'now':'')+'"'+(i===idx?' aria-current="step"':'')+'>'+n+'</li>').join('')+'</ol>';
+  h+='<h3>Scenario</h3><p>'+esc(e.scenario)+'</p>';
+  if(s.hyp&&s.stage!=='rev'&&s.stage!=='mid') h+='<p><b>Hypothesis recorded:</b> '+esc(hypText(s,e))+'</p>';
+
+  if(s.stage==='run'){
+    h+='<h3>Run</h3><p>Build and run the program, then compare what appears in the TERMINAL with the behaviour described above.</p><div class="actions"><button class="btn" data-act="run">&#9654; Run program</button></div>';
+  }
+  else if(s.stage==='hyp'){
+    h+='<h3>Hypothesise</h3><p>Study the terminal output and the code. Before using the debugger or any hint, commit to a prediction of the cause.</p>';
+    h+='<fieldset class="opts" id="hypForm"><legend>The most likely cause is:</legend>'+
+      e.hyps.map((o,i)=>'<label class="opt"><input type="radio" name="hyp" value="'+i+'"><span>'+esc(o.t)+'</span></label>').join('')+
+      '<label class="opt"><input type="radio" name="hyp" value="own"><span>Another cause (describe it below)</span></label>'+
+      '<label class="sr" for="hypOwn">Describe the cause in your own words</label><textarea id="hypOwn" rows="3" placeholder="Optional: describe the cause in your own words"></textarea></fieldset>';
+    if(s.hypMsg) h+='<div class="fb bad" role="alert">'+esc(s.hypMsg)+'</div>';
+    h+='<div class="actions"><button class="btn" data-act="hyp-submit">Record hypothesis</button></div>';
+  }
+  else if(s.stage==='inv'){
+    h+='<h3>Investigate</h3><div class="fb info">Hypothesis recorded. Now gather evidence that supports or contradicts it.</div><p>'+e.invest+'</p>';
+    h+='<ul><li>Click in the gutter beside a line, or press <kbd>F9</kbd>, to set a breakpoint. Suggested: line '+e.bpLine+'.</li><li>Press <kbd>F5</kbd> to start, then <kbd>F10</kbd> to step over each line'+(e.id==='e10'?' and <kbd>F11</kbd> to step into the function':'')+'.</li><li>To make a breakpoint conditional, right-click its red dot or use the <b>if</b> button in BREAKPOINTS.</li></ul>';
+    if(e.watch.length) h+='<p>Add to WATCH:</p><div class="chips">'+e.watch.map(w=>'<button class="chip" data-act="add-watch" data-expr="'+esc(w)+'">+ '+esc(w)+'</button>').join('')+'</div>';
+    if(e.cond) h+='<p>Conditional breakpoint (pauses only when the condition is true, which avoids stepping through every iteration):</p><div class="chips"><button class="chip" data-act="suggest-cond">+ line '+e.bpLine+' when '+esc(e.cond)+'</button></div>';
+    h+='<div class="actions"><button class="btn sec2" data-act="suggest-bp">Set suggested breakpoint</button><button class="btn sec2" data-act="debug">&#9654; Start debugging</button></div>';
+    h+=hintsHtml(e,s);
+    h+='<h3>Next</h3><p id="invCount"></p><div class="actions"><button class="btn" data-act="to-locate" id="toLoc">Ready to locate the fault</button></div>';
+  }
+  else if(s.stage==='loc'){
+    h+='<h3>Locate</h3><p>Click the line in the editor that contains the fault, or type its number, then confirm the choice. The debugger remains available.</p>';
+    h+='<div class="locrow"><label for="locLine">Line</label><input type="number" id="locLine" min="1" max="'+e.lines.length+'" value="'+(s.sel||'')+'"><button class="btn" data-act="loc-confirm">Confirm line</button></div>';
+    if(s.locMsg) h+='<div class="fb bad" role="alert"><b>Not the faulty line.</b> '+esc(s.locMsg)+'</div>';
+    h+=hintsHtml(e,s);
+  }
+  else if(s.stage==='fix'&&s.fixMode!=='mc'){
+    const start=s.fixDraft!==null?s.fixDraft:e.typeStart?e.typeStart:(e.acceptRe?'':e.lines[e.faultLine-1].trim());
+    h+='<h3>Fix</h3><div class="fb ok"><b>Fault located on line '+e.faultLine+'.</b> Now repair it.</div>';
+    h+='<p><label for="fixIn">'+esc(e.typePrompt||'Edit line '+e.faultLine+' so that the fault is corrected:')+'</label></p><input type="text" class="fixin" id="fixIn" spellcheck="false" autocomplete="off" value="'+esc(start)+'">';
+    if(s.fixMsg) h+='<div class="fb bad" role="alert"><b>Not accepted.</b> '+esc(s.fixMsg)+'</div>';
+    h+='<div class="actions"><button class="btn" data-act="fix-typed">Apply typed fix</button><button class="btn sec2" data-act="fix-mc">Show alternatives instead</button></div><p class="cond-note">A typed fix earns up to 3 marks. After two unsuccessful attempts, or on request, a set of alternatives is offered for 1 mark.</p>';
+    h+=hintsHtml(e,s);
+  }
+  else if(s.stage==='fix'){
+    h+='<h3>Fix</h3><div class="fb ok"><b>Fault located on line '+e.faultLine+'.</b> Now decide how it should be repaired.</div>';
+    h+='<fieldset class="opts"><legend>'+(e.fixes[0].d?'Choose the most appropriate change:':'Choose the most appropriate replacement for line '+e.faultLine+':')+'</legend>'+
+      e.fixes.map((o,i)=>'<label class="opt"><input type="radio" name="fix" value="'+i+'"'+(s.fixSel===i?' checked':'')+'>'+(o.d?'<span>'+esc(o.d)+'</span>':'<code>'+hl(o.c)+'</code>')+'</label>').join('')+'</fieldset>';
+    if(s.fixMsg) h+='<div class="fb bad" role="alert"><b>Not accepted.</b>'+esc(s.fixMsg)+'</div>';
+    h+='<div class="actions"><button class="btn" data-act="fix-check">Apply fix</button></div>';
+    h+=hintsHtml(e,s);
+  }
+  else{
+    const r=s.result, good=e.fixes.filter(o=>o.ok)[0];
+    const M=['The recorded hypothesis matched the actual cause.','Evidence from the debugger supports the hypothesis recorded earlier.','The original prediction was correct.'];
+    const N=['The recorded hypothesis did not match the actual cause. Revising a prediction in the light of evidence is exactly how debugging should proceed.','Evidence from the investigation contradicts the earlier hypothesis. That is a useful result: one explanation has been eliminated.','The original prediction turned out to be incorrect, which is common. The value lies in testing it instead of assuming it.'];
+    const mid=s.stage==='mid', own=s.fixText&&good.c&&norm(s.fixText)!==norm(good.c);
+    h+='<h3>'+(mid?'Fault 1 fixed':'Reveal')+'</h3><div class="fb ok"><b>Fix applied.</b> '+(own?'The typed line <code>'+esc(s.fixText)+'</code> is a valid repair.':esc(good.fb))+' The program has been rebuilt and run again: see the TERMINAL.</div>';
+    h+='<p>'+e.explain+'</p>';
+    h+='<h3>Hypothesis check</h3><p><b>Recorded:</b> '+esc(hypText(s,e))+'</p><p><b>Actual cause:</b> '+esc(e.cause)+'</p>';
+    if(r.hyp==='match') h+='<div class="fb ok">'+M[S.cur%3]+'</div>';
+    else if(r.hyp==='miss') h+='<div class="fb bad">'+N[S.cur%3]+'</div>';
+    else if(r.hyp==='own') h+='<div class="fb info">This hypothesis was written in free text. Compare it with the actual cause above, then record an honest judgement of how close it was:<div class="chips"><button class="chip" data-act="selfrate" data-r="match">It matched</button><button class="chip" data-act="selfrate" data-r="part">It partly matched</button><button class="chip" data-act="selfrate" data-r="miss">It did not match</button></div></div>';
+    else h+='<div class="fb '+(r.hyp==='own-match'?'ok':r.hyp==='own-miss'?'bad':'info')+'">Self-assessment recorded: '+hypLabel(r.hyp).toLowerCase()+'. '+(r.hyp==='own-match'?M[S.cur%3]:r.hyp==='own-miss'?N[S.cur%3]:'A partial match is worth examining: identify which part of the prediction the evidence supported and which part it did not.')+'</div>';
+    h+='<div class="habit"><b>Debugging habit:</b> '+esc(e.habit)+'</div>';
+    h+='<h3>Why the other fixes fall short</h3><ul>'+e.fixes.filter(o=>!o.ok).map(o=>'<li>'+(o.d?esc(o.d):'<code>'+esc(o.c)+'</code>')+'<br>'+esc(o.fb)+'</li>').join('')+'</ul>';
+    h+='<h3>'+(mid?'Marks for fault 1':s.p1?'Marks for fault 2':'Marks for this exercise')+': '+r.score+' / 10</h3><ul><li>Hypothesis: '+r.pHyp+' / 2'+(r.hyp==='own'?' (awaiting self-assessment)':'')+'</li><li>Locating the fault ('+r.loc+(r.loc===1?' attempt':' attempts')+'): '+r.pLoc+' / 3</li><li>Choosing the fix ('+r.fix+(r.fix===1?' attempt':' attempts')+'): '+r.pFix+' / 3</li><li>Independence ('+r.hints+(r.hints===1?' hint':' hints')+' used): '+r.pHint+' / 2</li></ul>';
+    if(s.p1&&!mid) h+='<p><b>Capstone mark:</b> the average of fault 1 ('+s.p1.score+') and fault 2 ('+r.score+'), which is '+Math.round((s.p1.score+r.score)/2)+' / 10.</p>';
+    if(mid) h+='<div class="fb bad"><b>One fault remains.</b> The output in the TERMINAL is still not as expected, so the cycle starts again with a new hypothesis.</div>';
+    h+='<div class="actions">'+(mid?'<button class="btn" data-act="part2">Investigate the second fault</button>':(S.cur<EX.length-1?'<button class="btn" data-act="next">Next exercise</button>':'<button class="btn" data-act="tab" data-tab="summary">View summary</button>')+'<button class="btn sec2" data-act="again">Practise again</button>')+(e.kind==='runtime'?'<button class="btn sec2" data-act="wall">Rebuild original with -Wall</button>':'')+'</div>';
+  }
+  $('guide').innerHTML=h;
+  updateInv();
+  if(focus){ const t=$('gTitle'); if(t) t.focus(); $('guide').scrollTop=0; }
+}
+function updateInv(){
+  const s=st(), c=$('invCount'); if(!c) return;
+  const need=2;
+  c.textContent=s.steps>=need?'Debugger actions so far: '+s.steps+'. Move on once the evidence points to a single line.':'Use the debugger at least twice before moving on (actions so far: '+s.steps+').';
+  $('toLoc').disabled=s.steps<need;
+}
+
+/* ---------- documents ---------- */
+function exListHtml(){
+  return '<ul class="exlist">'+EX.map((e,i)=>{ const p=S.progress[e.id]||{}; return '<li><button data-act="open" data-i="'+i+'">'+(p.done?'<span class="tick" aria-label="completed">&#10003; '+p.score+'/10</span>':'')+'<b>'+(i+1)+'. '+esc(e.title)+'</b><small>'+esc(e.group)+'</small></button></li>'; }).join('')+'</ul>';
+}
+function docWelcome(){
+  const row=(k,n,key,d)=>'<tr><td class="c-blue">'+ICON[k]+'</td><td>'+n+'</td><td><kbd>'+key+'</kbd></td><td>'+d+'</td></tr>';
+  return '<article class="doc"><h1>C++ Debugging Lab</h1><p class="lead">Level 4 Software Engineering: '+(EX.length-1)+' faulty programs and a two-fault capstone to diagnose with a simulated Visual Studio Code debugger.</p>'+
+  '<h2>Learning objectives</h2><p>By the end of this resource, students will be able to:</p><ul><li>Interpret C++ compiler error messages to locate syntax and type faults.</li><li>Apply breakpoints and stepping commands to trace program execution.</li><li>Analyse variable state and the call stack to identify logic errors.</li><li>Formulate and test hypotheses about the cause of a fault.</li><li>Evaluate alternative fixes and justify the most appropriate solution.</li></ul>'+
+  '<h2>How each exercise works</h2><p>The Lab Guide beside the editor leads every exercise through the same seven stages:</p><ol><li><b>Scenario:</b> read what the program is supposed to do.</li><li><b>Run:</b> build and run it to observe the faulty output or the compiler error.</li><li><b>Hypothesise:</b> record a prediction of the cause before any hint or answer is available.</li><li><b>Investigate:</b> set breakpoints and step through the code while VARIABLES, WATCH and CALL STACK show the program state.</li><li><b>Locate:</b> select the line that contains the fault.</li><li><b>Fix:</b> type the corrected line. After two unsuccessful attempts a set of alternatives is offered instead.</li><li><b>Reveal:</b> read the explanation, compare it with the recorded hypothesis and note the debugging habit.</li></ol>'+
+  '<div class="card"><b>Why hypothesis first?</b> Stepping through code without a prediction is only watching. Committing to a hypothesis turns each step into a test: the evidence either supports the idea or eliminates it. Experienced developers debug this way, and a wrong hypothesis that is tested and discarded is still progress. Hints unlock only after a hypothesis has been recorded.</div>'+
+  '<h2>The debug toolbar</h2><table><thead><tr><th scope="col">Icon</th><th scope="col">Command</th><th scope="col">Key</th><th scope="col">Effect</th></tr></thead><tbody>'+
+  row('cont','Continue','F5','Starts a session, or resumes until the next breakpoint or the end of the program.')+
+  row('over','Step Over','F10','Executes the current line. A function call is run as a single step.')+
+  row('into','Step Into','F11','Executes the current line and, when it calls a function, pauses on the first line inside that function.')+
+  row('out','Step Out','Shift+F11','Runs the remainder of the current function and pauses back in the caller.')+
+  row('restart','Restart','Ctrl+Shift+F5','Ends the session and starts again from the beginning.')+
+  row('stop','Stop','Shift+F5','Ends the debug session.')+
+  '</tbody></table><p>The yellow highlighted line is the <em>next</em> line to be executed: it has not run yet. <kbd>F9</kbd> toggles a breakpoint on the current editor line, and <kbd>F6</kbd> pauses a running program. Should the browser intercept a function key, use the toolbar buttons instead.</p>'+
+  '<h2>Breakpoints</h2><p>A breakpoint is a marker telling the debugger to pause just before a particular line runs. Click in the gutter to the left of a line number to place one: a red dot appears. With the editor focused, the up and down arrow keys move between lines and <kbd>F9</kbd> toggles a breakpoint. When no breakpoints are set, a new session pauses on the first line of <code>main()</code>.</p><p>A <b>conditional breakpoint</b> pauses only when an expression is true, for example <code>i == 5</code> inside a loop. Right-click a red dot, or use the <b>if</b> button in the BREAKPOINTS panel, to add a condition.</p>'+
+  '<h2>A note on compile-time errors</h2><p>A program that does not compile has no executable, so a real debugger cannot start. For the four compile-time exercises the debug controls instead replay, in simplified form, the order in which the compiler reads the file. This is a teaching aid and is labelled as simulated wherever it appears.</p>'+
+  '<h2>Exercises</h2>'+exListHtml()+
+  '<p>The final exercise is a capstone containing two faults that must be found one after the other. Its mark is the average of the two parts.</p><p>Progress and scores are saved in this browser, and the Summary tab can export them for submission. Each exercise is worth 10 marks: 2 for the hypothesis, 3 for locating the fault, 3 for the fix (1 when it is chosen from alternatives) and 2 for working without hints.</p></article>';
+}
+function docToolkit(){
+  return '<article class="doc"><h1>Debugging Toolkit</h1><p class="lead">A quick reference to keep open while working through the exercises.</p>'+
+  '<h2>1. Reading compiler errors</h2><p>Every g++ diagnostic follows the same pattern:</p><pre>main.cpp:10:5: error: expected \',\' or \';\' before \'std\'\n   10 |     std::cout &lt;&lt; "Room width:  " &lt;&lt; width;\n      |     ^~~</pre><ul><li><b>File, line and column</b> give the place where the compiler <em>noticed</em> the problem. The cause may lie on an earlier line.</li><li><b>error</b> stops the build, whereas a <b>warning</b> does not. Warnings frequently point at genuine logic faults, so build with <code>-Wall -Wextra</code>.</li><li><b>Fix the first error first.</b> Later messages are often consequences of the first one.</li><li>Read the message literally: "expected X before Y" means that X is missing somewhere ahead of Y.</li></ul>'+
+  '<h2>2. Breakpoints</h2><p>A breakpoint pauses execution immediately <em>before</em> the marked line runs. Place one just ahead of the region under suspicion and not at the very top of the program. A useful strategy is to halve the search: put a breakpoint in the middle, check whether the state is already wrong, and then move earlier or later accordingly.</p><p>Inside a loop, an ordinary breakpoint pauses on every iteration. A <b>conditional breakpoint</b> carries an expression such as <code>i == 5</code> or <code>total &gt; 1000</code> and pauses only when that expression is true, which leads straight to the iteration of interest.</p>'+
+  '<h2>3. Stepping commands</h2><table><thead><tr><th scope="col">Command</th><th scope="col">Key</th><th scope="col">Use it when</th></tr></thead><tbody><tr><td>Continue</td><td><kbd>F5</kbd></td><td>The next point of interest is a later breakpoint.</td></tr><tr><td>Step Over</td><td><kbd>F10</kbd></td><td>The called function is trusted and only its effect matters.</td></tr><tr><td>Step Into</td><td><kbd>F11</kbd></td><td>The fault may lie inside the function being called.</td></tr><tr><td>Step Out</td><td><kbd>Shift+F11</kbd></td><td>Enough has been seen inside the function and the caller is of interest again.</td></tr></tbody></table>'+
+  '<h2>4. Watch expressions</h2><p>The VARIABLES panel lists every local variable. The WATCH panel evaluates expressions chosen by the developer after each step, for example <code>i &lt; COUNT</code>, <code>marks[i]</code> or <code>sum / COUNT</code>. Watching a loop condition or a sub-expression often exposes the exact moment at which the state goes wrong. In this lab the WATCH panel supports variables, arithmetic, comparisons, array indexing, <code>.size()</code>, <code>.at()</code> and <code>static_cast&lt;double&gt;()</code>.</p>'+
+  '<h2>5. The call stack</h2><p>Each function call creates a <em>stack frame</em> holding that call\'s parameters and local variables. The CALL STACK panel lists the frames with the current function at the top and <code>main()</code> at the bottom. Selecting a frame displays its variables, which makes it possible to compare what the caller holds with what the called function received.</p>'+
+  '<h2>6. Rubber duck debugging</h2><p>Explain the code aloud, line by line, to an inanimate listener such as a rubber duck. State what each line is <em>meant</em> to do and then what it <em>actually</em> does. The mismatch between the two often becomes obvious part of the way through the explanation, because describing the code forces assumptions to be examined.</p>'+
+  '<h2>A repeatable process</h2><ol><li>Reproduce the fault and describe the symptom precisely.</li><li>Form a hypothesis about the cause.</li><li>Predict what the debugger should show if the hypothesis is right.</li><li>Test the prediction with breakpoints, stepping and watches.</li><li>Fix the cause, not the symptom, and run the program again to confirm.</li></ol></article>';
+}
+function docSummary(){
+  const d=doneCount(), sc=totalScore(), all=d===EX.length, pct=sc*100/MAX;
+  const band=pct>=85?'An excellent result: faults were diagnosed accurately and largely without assistance.':pct>=65?'A solid result. Reviewing the exercises with the lowest marks would consolidate the weaker techniques.':pct>=40?'A fair start. Repeating the exercises where several attempts or hints were needed is recommended.':'Further practice is advisable. Revisit the Debugging Toolkit and attempt the exercises again.';
+  let h='<article class="doc"><h1>Summary</h1><p class="lead">'+(all?'All exercises are complete.':'Completed '+d+' of '+EX.length+' exercises. Finish the remaining exercises to complete the lab.')+'</p>';
+  h+='<p class="big">'+sc+' / '+MAX+'</p>'+(all?'<p>'+band+'</p>':'')+'<div class="pbar" role="progressbar" aria-label="Exercises completed" aria-valuemin="0" aria-valuemax="'+EX.length+'" aria-valuenow="'+d+'"><i style="width:'+(d*100/EX.length)+'%"></i></div>';
+  h+='<h2>Results by exercise</h2><table><thead><tr><th scope="col">Exercise</th><th scope="col">Hypothesis</th><th scope="col">Locate attempts</th><th scope="col">Fix attempts</th><th scope="col">Hints</th><th scope="col">Marks</th></tr></thead><tbody>'+
+    EX.map((e,i)=>{ const p=S.progress[e.id]; return '<tr><td><button data-act="open" data-i="'+i+'" style="color:var(--accent);text-decoration:underline">'+(i+1)+'. '+esc(e.title)+'</button></td>'+(p&&p.done?'<td>'+hypLabel(p.hyp)+'</td><td>'+p.loc+'</td><td>'+p.fix+'</td><td>'+p.hints+'</td><td>'+p.score+' / 10</td>':'<td colspan="5">Not yet completed</td>')+'</tr>'; }).join('')+'</tbody></table>';
+  h+='<h2>Debugging habits to keep</h2><ul>'+EX.map(e=>'<li>'+esc(e.habit)+'</li>').join('')+'</ul>';
+  h+='<h2>Reflection</h2><p><label for="reflect">Choose one exercise in which the first hypothesis was wrong, or in which a hint was needed. What evidence from the debugger changed the diagnosis, and what will be done differently when debugging the next piece of coursework?</label></p><textarea id="reflect" rows="7" placeholder="Write a short reflection (around 100 words). It is saved in this browser.">'+esc(store.get('cdl.reflect',''))+'</textarea>';
+  h+='<h2>Export results</h2><p><label for="stuName">Name or student number (optional, included in the export):</label></p><input type="text" id="stuName" autocomplete="off" style="max-width:340px" value="'+esc(store.get('cdl.name',''))+'"><p>The export contains the score, each recorded hypothesis and its outcome, the attempts and hints used, each fix and the reflection above.</p><p><button class="btn" data-act="export">Download my results (.txt)</button> <button class="btn sec2" data-act="print">Print or save as PDF</button></p>';
+  h+='<h2>Start again</h2><p>Resetting clears every score, tick and the reflection stored in this browser.</p><p><button class="btn sec2" data-act="reset">Reset all progress</button></p></article>';
+  return h;
+}
+
+/* ---------- actions: run ---------- */
+function runProgram(){
+  const e=cur(), s=st();
+  stopDebug(true);
+  const P='student@lab:~/debugging$ ';
+  s.term=[{c:'cmd',t:P+'g++ -g '+e.file+' -o lab'}];
+  s.ran=true;
+  if(e.kind==='compile'&&!s.fixed){
+    const d=e.diag, src=e.lines[d.line-1];
+    s.term.push({c:'err',t:e.file+": In function 'int main()':"},{c:'err',t:e.file+':'+d.line+':'+d.col+': error: '+d.msg},
+      {t:String(d.line).padStart(5)+' | '+src},{t:'      | '+' '.repeat(d.col-1)+'^'+'~'.repeat(d.tok.length-1)},
+      {c:'note',t:'Build failed: no executable was produced.'});
+    s.out=[{t:'[Build] g++ -g '+e.file+' -o lab'},{c:'err',t:'[Build] Finished with 1 error and 0 warnings.'}];
+  }else{
+    s.term.push({c:'cmd',t:P+'./lab'});
+    (s.fixed?e.fixedRun:e.run).forEach(l=>s.term.push({c:'out',t:l}));
+    if(s.fixed&&e.stillWrong) s.term.push({c:'err',t:'The first fault has gone, but the output is still not as expected.'});
+    else if(s.fixed) s.term.push({c:'good',t:'The output now matches the expected behaviour.'});
+    else if(e.runNote) s.term.push({c:'note',t:'('+e.runNote+')'});
+    s.out=[{t:'[Build] g++ -g '+e.file+' -o lab'},{c:'good',t:'[Build] Finished with 0 errors and 0 warnings.'}];
+  }
+  if(s.stage==='run') s.stage='hyp';
+  S.panel='terminal';
+}
+
+/* ---------- actions: debugger ---------- */
+function con(t,c){ const s=st(); s.con.push({t:t,c:c||'out'}); if(s.con.length>300) s.con.splice(0,s.con.length-300); }
+function emit(o){ if(o) o.split('\n').forEach(l=>{ if(l) con(l,'out'); }); }
+function refreshDebugUI(scroll){ renderEditor(scroll); renderDebug(); renderPanel(); renderStatus(); renderToolbar(); updateInv(); }
+function startDebug(){
+  const e=cur(), s=st();
+  if(S.tab!=='code'){ S.tab='code'; renderTabs(); renderExplorer(); }
+  if(s.stage==='run'){ toast('Run the program first, so that the symptom is known before debugging begins.'); return; }
+  if(s.stage==='hyp'){ toast('Record a hypothesis before starting the debugger. Debugging is most effective when it tests a prediction.'); return; }
+  if(s.fixed){ toast(s.stage==='mid'?'Choose "Investigate the second fault" in the Lab Guide to continue.':'This exercise is complete. Choose "Practise again" in the Lab Guide to debug it once more.'); return; }
+  dbg.active=true; dbg.running=false; dbg.i=0; dbg.prev=null;
+  s.con=[]; S.panel='console'; s.steps++;
+  con(e.kind==='compile'?'Compiler walk-through started (simulated). The build failed, so no executable exists. Stepping follows the order in which the compiler reads the file.':'Debug session started for '+e.file+'.','info');
+  const first=e.steps[0];
+  if(s.bps.length&&!bpHit(s,e,first)) advance('cont',true);
+  else{ con(s.bps.length?'Breakpoint reached at line '+first.l+'.':'No breakpoints are set: paused on entry at line '+first.l+'.','info'); pause(); }
+}
+function pause(){
+  const step=cur().steps[dbg.i];
+  dbg.running=false; dbg.frame=step.f.length-1; S.cursor=step.l;
+  refreshDebugUI(true);
+  say('Paused at line '+step.l);
+}
+function advance(mode,fromStart){
+  const e=cur(), s=st();
+  if(!dbg.active||dbg.running) return;
+  if(!fromStart) s.steps++;
+  const here=e.steps[dbg.i], depth=here.f.length;
+  dbg.prev={fn:here.f[depth-1].fn,vals:frameVals(here.f[depth-1])};
+  let n=0;
+  for(;;){
+    emit(e.steps[dbg.i].o);
+    dbg.i++;
+    if(dbg.i>=e.steps.length){
+      if(e.loopTo!==null) dbg.i=e.loopTo;
+      else{ endSession(); return; }
+    }
+    n++;
+    const nx=e.steps[dbg.i];
+    if(bpHit(s,e,nx)){ if(mode==='cont'||mode==='out'||nx.f.length>depth) con('Breakpoint reached at line '+nx.l+'.','info'); break; }
+    if(mode==='into') break;
+    if(mode==='over'&&nx.f.length<=depth) break;
+    if(mode==='out'&&nx.f.length<depth) break;
+    if(n>e.steps.length*3+10){
+      dbg.running=true;
+      con('The program is still running and no breakpoint has been reached. Use Pause (F6) or Stop to regain control.','info');
+      refreshDebugUI(false); say('Program running'); return;
+    }
+  }
+  if(dbg.prev&&e.steps[dbg.i].f[e.steps[dbg.i].f.length-1].fn!==dbg.prev.fn) dbg.prev=null;
+  pause();
+}
+function endSession(){
+  const e=cur();
+  con(e.kind==='compile'?'Compilation stopped with 1 error. No executable was produced.':e.endMsg||'The program has exited with code 0.','info');
+  dbg.active=false; dbg.running=false;
+  refreshDebugUI(false); say('Debug session ended');
+}
+function stopDebug(silent){
+  if(!dbg.active) return;
+  dbg.active=false; dbg.running=false;
+  if(!silent){ con('Debug session stopped.','info'); refreshDebugUI(false); }
+}
+function toggleBp(n){
+  const s=st(), i=s.bps.indexOf(n);
+  if(i>=0){ s.bps.splice(i,1); delete s.bpCond[n]; if(S.editBp===n) S.editBp=null; } else s.bps.push(n);
+  renderEditor(false); renderDebug();
+  say('Breakpoint '+(i>=0?'removed from':'set on')+' line '+n);
+}
+
+/* ---------- actions: scoring ---------- */
+function computeResult(e,s){
+  const hyp=s.hyp.own?(s.selfRate?'own-'+s.selfRate:'own'):(e.hyps[s.hyp.i].ok?'match':'miss');
+  const pHyp=(hyp==='match'||hyp==='own-match')?2:hyp==='own-part'?1:0, pLoc=Math.max(1,4-s.locTries), pFix=Math.max(1,4-s.fixTries), pHint=Math.max(0,2-s.hints);
+  return {hyp:hyp,pHyp:pHyp,pLoc:pLoc,pFix:pFix,pHint:pHint,loc:s.locTries,fix:s.fixTries,hints:s.hints,score:pHyp+pLoc+pFix+pHint};
+}
+function finish(){
+  const e=cur(), s=st(), base=EX[S.cur], p=s.p1;
+  const r=s.result=computeResult(e,s);
+  const score=p?Math.round((p.score+r.score)/2):r.score;
+  const old=S.progress[base.id];
+  if(!old||!old.done||score>=old.score){
+    S.progress[base.id]={done:true,score:score,hyp:r.hyp,loc:r.loc+(p?p.loc:0),fix:r.fix+(p?p.fix:0),hints:r.hints+(p?p.hints:0),
+      hypText:(p?'Fault 1: '+s.p1hyp+' | Fault 2: ':'')+hypText(s,e),
+      fixText:(p?'Fault 1: '+s.p1fix+' | Fault 2: ':'')+fixLabel(e,s)};
+    store.set('cdl.progress',S.progress);
+  }
+}
+function fixLabel(e,s){ return s.fixText?s.fixText+' (typed)':e.fixes.filter(o=>o.ok).map(o=>o.c||o.d)[0]+' (chosen from alternatives)'; }
+function fixSuccess(){
+  const e=cur(), s=st(), base=EX[S.cur];
+  stopDebug(true); s.fixed=true; s.fixMsg=null;
+  if(base.p2&&s.part!==2){ s.stage='mid'; s.result=computeResult(e,s); }
+  else{ s.stage='rev'; finish(); }
+  runProgram(); S.cursor=e.faultLine; renderAll(true);
+}
+function resultsText(){
+  const nameEl=$('stuName'), refEl=$('reflect');
+  const name=nameEl?nameEl.value:store.get('cdl.name',''), ref=refEl?refEl.value:store.get('cdl.reflect','');
+  const nl='\r\n';
+  let t='C++ Debugging Lab: results'+nl+'Name or student number: '+(name.trim()||'(not given)')+nl+'Date: '+new Date().toLocaleDateString('en-GB')+nl+'Completed: '+doneCount()+' of '+EX.length+nl+'Score: '+totalScore()+' / '+MAX+nl+nl;
+  EX.forEach((e,i)=>{
+    const p=S.progress[e.id];
+    t+=(i+1)+'. '+e.title+': '+(p&&p.done?p.score+' / 10':'not completed')+nl;
+    if(p&&p.done) t+='   Hypothesis: '+(p.hypText||'')+nl+'   Outcome: '+hypLabel(p.hyp)+nl+'   Locate attempts: '+p.loc+', fix attempts: '+p.fix+', hints used: '+p.hints+nl+'   Fix: '+(p.fixText||'')+nl;
+    t+=nl;
+  });
+  return t+'Reflection:'+nl+(ref.trim()||'(none written)')+nl;
+}
+
+function renderAll(focusGuide){ renderTabs(); renderEditor(true); renderDebug(); renderExplorer(); renderPanel(); renderStatus(); renderGuide(focusGuide); renderView(); }
+function renderView(){
+  ['explorer','search','debug','ext'].forEach(v=>{ $('view-'+v).hidden=S.view!==v; });
+  document.querySelectorAll('.activity button').forEach(b=>b.setAttribute('aria-pressed',String(S.sideOpen&&b.dataset.view===S.view)));
+  $('sidebar').classList.toggle('closed',!S.sideOpen);
+}
+function openExercise(i,line){
+  stopDebug(true);
+  S.cur=i; S.tab='code'; S.cursor=line||1; S.panel='terminal';
+  renderAll(false);
+}
+
+const ACT={
+  theme(){ setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark',true); },
+  view(b){ const v=b.dataset.view; if(S.view===v) S.sideOpen=!S.sideOpen; else{ S.view=v; S.sideOpen=true; } renderView(); },
+  tab(b){ S.tab=b.dataset.tab; renderTabs(); renderExplorer(); if(b.getAttribute('role')==='tab'){ const t=$('tab-'+S.tab); if(t) t.focus(); } },
+  ptab(b){ S.panel=b.dataset.p; renderPanel(); const t=document.querySelector('#ptabs [data-p="'+S.panel+'"]'); if(t) t.focus(); },
+  open(b){ openExercise(+b.dataset.i); $('gTitle').focus(); },
+  run(b){ if(S.tab!=='code'){ S.tab='code'; } runProgram(); renderAll(!!b.closest('#guide')); },
+  debug(){ startDebug(); },
+  cont(){ if(!dbg.active) startDebug(); else if(dbg.running){ con('Paused at line '+cur().steps[dbg.i].l+'.','info'); pause(); } else advance('cont'); },
+  over(){ advance('over'); }, into(){ advance('into'); }, out(){ advance('out'); },
+  restart(){ if(dbg.active){ stopDebug(true); startDebug(); } },
+  stop(){ stopDebug(false); },
+  frame(b){ dbg.frame=+b.dataset.i; const step=pausedStep(); if(step) S.cursor=step.f[dbg.frame].l; renderEditor(true); renderDebug(); const f=document.querySelector('.frame[aria-current="true"]'); if(f) f.focus(); },
+  'rm-watch'(b){ st().watches.splice(+b.dataset.i,1); renderDebug(); },
+  'add-watch'(b){ const s=st(), x=b.dataset.expr; if(s.watches.indexOf(x)<0) s.watches.push(x); S.view='debug'; S.sideOpen=true; renderView(); renderDebug(); toast('Added "'+x+'" to the WATCH panel.'); },
+  'rm-bp'(b){ toggleBp(+b.dataset.line); },
+  'clear-bps'(){ st().bps=[]; st().bpCond={}; S.editBp=null; renderEditor(false); renderDebug(); },
+  'suggest-bp'(){ const e=cur(), s=st(); if(s.bps.indexOf(e.bpLine)<0) toggleBp(e.bpLine); S.cursor=e.bpLine; renderEditor(true); toast('Breakpoint set on line '+e.bpLine+'.'); },
+  problem(b){ S.tab='code'; S.cursor=+b.dataset.line; renderTabs(); renderEditor(true); $('editor').focus(); },
+  'hyp-submit'(){
+    const s=st(), r=document.querySelector('input[name=hyp]:checked'), own=$('hypOwn').value.trim();
+    if(!r&&!own){ s.hypMsg='Select one of the suggested causes or describe another before continuing.'; renderGuide(false); return; }
+    if((r&&r.value==='own'||!r)&&own.length<10){ s.hypMsg='Describe the suspected cause in a little more detail (at least ten characters).'; renderGuide(false); return; }
+    s.hyp=(!r||r.value==='own')?{own:true,text:own}:{i:+r.value};
+    s.hypMsg=null; s.stage='inv'; renderGuide(true);
+  },
+  hint(){ const s=st(); if(s.hints<3) s.hints++; renderGuide(false); },
+  'to-locate'(){ const s=st(); s.stage='loc'; s.sel=null; renderGuide(true); renderEditor(false); },
+  'loc-confirm'(){
+    const e=cur(), s=st(), G=['Consider which line first makes the program state incorrect, as opposed to the line where the symptom shows.','Trace back from the symptom to the earliest line that behaves unexpectedly.','Stepping through once more while watching VARIABLES may help to narrow the search.'];
+    const n=s.sel;
+    if(!n||n<1||n>e.lines.length){ s.locMsg='Select a line in the editor or type a valid line number first.'; renderGuide(false); return; }
+    s.locTries++;
+    if(n===e.faultLine){ s.stage='fix'; s.found=n; s.locMsg=null; renderEditor(false); renderGuide(true); }
+    else{ s.locMsg=e.nearLines[n]||('Line '+n+' is not where the fault lies. '+G[(s.locTries-1)%3]); renderGuide(false); const m=document.querySelector('#guide .fb.bad'); if(m&&m.scrollIntoView) m.scrollIntoView({block:'nearest'}); }
+  },
+  'fix-check'(){
+    const e=cur(), s=st(), r=document.querySelector('input[name=fix]:checked');
+    if(!r){ s.fixMsg='Select one of the options first.'; renderGuide(false); return; }
+    const o=e.fixes[+r.value]; s.fixTries++; s.fixSel=+r.value;
+    if(o.ok){ s.fixText=null; fixSuccess(); }
+    else{ s.fixMsg=o.fb; renderGuide(false); const m=document.querySelector('#guide .fb.bad'); if(m&&m.scrollIntoView) m.scrollIntoView({block:'nearest'}); }
+  },
+  'fix-typed'(){
+    const e=cur(), s=st(), raw=$('fixIn').value, nv=norm(raw);
+    const G=['That line is not among the accepted fixes. Check that it would compile and that it removes the cause, not only the symptom.','Still not an accepted fix. Re-read the faulty line and change as little as possible.'];
+    s.fixDraft=raw;
+    if(!nv){ s.fixMsg='Type the corrected line first.'; renderGuide(false); return; }
+    s.fixTries++;
+    if(e.acceptRe?e.acceptRe.test(nv):e.acceptN.indexOf(nv)>=0){ s.fixText=raw.trim(); fixSuccess(); return; }
+    const orig=e.lines[e.faultLine-1].trim(), hit=e.fixes.filter(o=>!o.ok&&o.c&&norm(o.c)===nv)[0];
+    s.fixMsg=hit?hit.fb:(!e.acceptRe&&nv===norm(orig))?'The line has not been changed.':(!e.acceptRe&&/\{$/.test(orig)&&!/\{$/.test(nv))?'The opening brace at the end of the line has been lost.':G[(s.fixTries-1)%2];
+    if(s.fixTries>=2){ s.fixMode='mc'; s.fixMsg+=' Two typed attempts have been used, so choose from the alternatives below.'; }
+    renderGuide(false);
+    const f=$('fixIn'); if(f) f.focus();
+  },
+  'fix-mc'(){ const s=st(); s.fixMode='mc'; s.fixTries=Math.max(s.fixTries,2); s.fixMsg=null; renderGuide(false); const r=document.querySelector('input[name=fix]'); if(r) r.focus(); },
+  selfrate(b){ const s=st(); s.selfRate=b.dataset.r; if(s.stage==='mid') s.result=computeResult(cur(),s); else finish(); renderGuide(false); renderExplorer(); },
+  part2(){
+    const base=EX[S.cur], s=st(), ns=fresh();
+    ns.part=2; ns.p1=s.result; ns.p1hyp=hypText(s,base); ns.p1fix=fixLabel(base,s);
+    S.ex[base.id]=ns; S.cursor=1;
+    runProgram(); renderAll(true);
+  },
+  wall(){
+    const e=cur(), s=st(), w=e.wall;
+    s.term=[{c:'cmd',t:'student@lab:~/debugging$ g++ -Wall -Wextra -g '+e.file+' -o lab'},{c:'note',t:'(building the original, unfixed source with warnings enabled)'}];
+    if(w){
+      s.term.push({c:'warn',t:e.file+": In function 'int main()':"},{c:'warn',t:e.file+':'+w.line+':'+w.col+': warning: '+w.msg},
+        {t:String(w.line).padStart(5)+' | '+e.lines[w.line-1]},{t:'      | '+' '.repeat(w.col-1)+'^'+'~'.repeat(w.tok.length-1)},
+        {c:'note',t:'A warning does not stop the build, but this one points straight at the fault that took a debugging session to find. The exact wording depends on the compiler version.'});
+    }else{
+      s.term.push({c:'good',t:'Build finished with 0 warnings.'},{c:'note',t:'The compiler has nothing to say about this fault: the code is valid C++ that does the wrong thing. Only testing and debugging could reveal it.'});
+    }
+    S.panel='terminal'; renderPanel();
+    toast(w?'The compiler would have warned about this fault: see the TERMINAL.':'No warnings: this fault is invisible to the compiler. See the TERMINAL.');
+  },
+  'edit-cond'(b){ S.editBp=S.editBp===+b.dataset.line?null:+b.dataset.line; renderDebug(); const i=$('bpCondIn'); if(i) i.focus(); },
+  'save-cond'(b){ const s=st(), n=+b.dataset.line, v=$('bpCondIn').value.trim(); if(v) s.bpCond[n]=v; else delete s.bpCond[n]; S.editBp=null; renderEditor(false); renderDebug(); say(v?'Condition set on line '+n:'Condition removed from line '+n); },
+  'suggest-cond'(){ const e=cur(), s=st(); if(s.bps.indexOf(e.bpLine)<0) s.bps.push(e.bpLine); s.bpCond[e.bpLine]=e.cond; S.cursor=e.bpLine; S.view='debug'; S.sideOpen=true; renderView(); renderEditor(true); renderDebug(); toast('Conditional breakpoint set: line '+e.bpLine+' when '+e.cond+'.'); },
+  export(){
+    try{
+      const url=URL.createObjectURL(new Blob([resultsText()],{type:'text/plain'})), a=document.createElement('a');
+      a.href=url; a.download='cpp-debugging-lab-results.txt'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),2000);
+      toast('Results downloaded as cpp-debugging-lab-results.txt.');
+    }catch(x){ toast('The download could not be started in this browser. Use "Print or save as PDF" instead.'); }
+  },
+  print(){ window.print(); },
+  next(){ openExercise(S.cur+1); $('gTitle').focus(); $('guide').scrollTop=0; },
+  again(){ stopDebug(true); S.ex[cur().id]=fresh(); S.cursor=1; renderAll(true); },
+  reset(){
+    if(!window.confirm('Reset all progress, scores and the reflection? This cannot be undone.')) return;
+    S.progress={}; S.ex={}; store.set('cdl.progress',{}); store.set('cdl.reflect','');
+    stopDebug(true); S.cur=0; S.tab='welcome'; renderAll(false);
+  }
+};
+
+/* ---------- events ---------- */
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest('[data-act]');
+  if(b){ if(b.disabled) return; const f=ACT[b.dataset.act]; if(f) f(b,ev); return; }
+  const g=ev.target.closest('.gut');
+  if(g){ S.cursor=+g.dataset.bp; toggleBp(S.cursor); return; }
+  const row=ev.target.closest('.row');
+  if(row) pickLine(+row.dataset.line);
+});
+function pickLine(n){
+  const s=st();
+  S.cursor=n;
+  if(s.stage==='loc'){ s.sel=n; const inp=$('locLine'); if(inp) inp.value=n; }
+  renderEditor(true);
+}
+$('editor').addEventListener('keydown',ev=>{
+  const max=codeOf(cur(),st()).split('\n').length;
+  if(ev.key==='ArrowDown'||ev.key==='ArrowUp'){
+    ev.preventDefault();
+    pickLine(Math.min(max,Math.max(1,S.cursor+(ev.key==='ArrowDown'?1:-1))));
+    say('Line '+S.cursor+': '+(cur().lines[S.cursor-1]||'').trim()+(st().bps.indexOf(S.cursor)>=0?'. Breakpoint set.':''));
+  }
+});
+document.addEventListener('input',ev=>{
+  const t=ev.target;
+  if(t.id==='locLine'){ const n=parseInt(t.value,10); const s=st(); s.sel=isNaN(n)?null:n; if(s.sel){ S.cursor=s.sel; } renderEditor(true); }
+  else if(t.id==='reflect') store.set('cdl.reflect',t.value);
+  else if(t.id==='stuName') store.set('cdl.name',t.value);
+  else if(t.id==='fixIn') st().fixDraft=t.value;
+  else if(t.id==='hypOwn'){ if(t.value.trim()){ const r=document.querySelector('input[name=hyp][value=own]'); if(r) r.checked=true; } }
+  else if(t.id==='searchBox') doSearch(t.value);
+});
+$('watchForm').addEventListener('submit',ev=>{
+  ev.preventDefault();
+  const inp=$('watchIn'), x=inp.value.trim(); if(!x) return;
+  const s=st(); if(s.watches.indexOf(x)<0) s.watches.push(x);
+  inp.value=''; renderDebug(); inp.focus();
+});
+function doSearch(q){
+  q=q.trim().toLowerCase(); const out=[];
+  if(q.length<2){ $('searchRes').innerHTML='<p class="empty">Type at least two characters.</p>'; return; }
+  EX.forEach((e,i)=>e.lines.forEach((ln,j)=>{ if(out.length<40&&ln.toLowerCase().indexOf(q)>=0) out.push('<li><button class="frame" data-act="open-line" data-i="'+i+'" data-line="'+(j+1)+'"><span>'+esc(ln.trim().slice(0,28))+'</span><small>'+esc(e.file.slice(0,2))+' : '+(j+1)+'</small></button></li>'); }));
+  $('searchRes').innerHTML=out.length?'<ul>'+out.join('')+'</ul>':'<p class="empty">No results found.</p>';
+}
+ACT['open-line']=b=>{ openExercise(+b.dataset.i,+b.dataset.line); };
+
+document.addEventListener('contextmenu',ev=>{
+  const g=ev.target.closest('.gut'); if(!g) return;
+  ev.preventDefault();
+  const n=+g.dataset.bp, s=st();
+  if(s.bps.indexOf(n)<0) s.bps.push(n);
+  S.editBp=n; S.cursor=n; S.view='debug'; S.sideOpen=true;
+  renderView(); renderEditor(false); renderDebug();
+  const i=$('bpCondIn'); if(i) i.focus();
+});
+document.addEventListener('keydown',ev=>{
+  const k=ev.key;
+  if(k==='Enter'&&ev.target.id==='fixIn'){ ev.preventDefault(); ACT['fix-typed'](); return; }
+  if(k==='Enter'&&ev.target.id==='bpCondIn'){ ev.preventDefault(); const b=document.querySelector('[data-act=save-cond]'); if(b) b.click(); return; }
+  if(['F5','F6','F9','F10','F11'].indexOf(k)<0) return;
+  ev.preventDefault();
+  if(S.tab!=='code'){ if(k==='F5'&&!ev.shiftKey) toast('Open an exercise file to start debugging.'); return; }
+  if(k==='F5'){
+    if(ev.ctrlKey&&ev.shiftKey) ACT.restart();
+    else if(ev.shiftKey) ACT.stop();
+    else if(!dbg.running) ACT.cont();
+  }
+  else if(k==='F6'){ if(dbg.running) ACT.cont(); }
+  else if(k==='F9') toggleBp(S.cursor);
+  else if(!dbg.active) startDebug();
+  else if(k==='F10') advance('over');
+  else if(k==='F11') advance(ev.shiftKey?'out':'into');
+});
+window.addEventListener('resize',()=>{ if(window.innerWidth<=1150&&S.sideOpen&&!$('sidebar').contains(document.activeElement)){ S.sideOpen=false; renderView(); } });
+
+/* expose a small handle for testing */
+window.__lab={EX:EX,S:S,dbg:dbg,st:st,ACT:ACT,evalWatch:evalWatch,fmt:fmt};
+
+renderAll(false);
+})();
+</script>
+</body>
+</html>
